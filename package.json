@@ -1,0 +1,41 @@
+{
+  "title": "FriendsFingers Smart Contracts",
+  "name": "friendsfingers-smartcontracts",
+  "version": "0.0.1",
+  "description": "Source code for FriendsFingers Smart Contracts",
+  "keywords": [
+    "Solidity, Truffle, Zeppelin"
+  ],
+  "homepage": "https://www.friendsfingers.com",
+  "bugs": {
+    "url": "https://github.com/friendsfingers/friendsfingers-smartcontracts/issues"
+  },
+  "license": "MIT",
+  "author": "FriendsFingers",
+  "contributors": [
+    "Vittorio Minacori (https://github.com/vittominacori)"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/friendsfingers/friendsfingers-smartcontracts.git"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "main": "truffle.js",
+  "dependencies": {
+    "truffle-contract": "^3.0.3",
+    "zeppelin-solidity": "1.6.0"
+  },
+  "devDependencies": {
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-register": "^6.26.0",
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "chai-bignumber": "^2.0.2",
+    "ethereumjs-util": "^5.1.3",
+    "lite-server": "^2.3.0",
+    "yargs": "^11.0.0"
+  }
+}
