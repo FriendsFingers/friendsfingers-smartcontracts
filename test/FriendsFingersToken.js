@@ -212,7 +212,7 @@ contract('FriendsFingersToken', function (accounts) {
         });
     });
 
-    describe('should have additional functions works as expected', function () {
+    describe('should have additional functions working as expected', function () {
         it('should call receiveApproval on contract after approveAndCall', async function () {
             let token = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
 

@@ -314,6 +314,12 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
             await increaseTimeTo(this.startTime);
             await this.crowdsale.send(this.cap.plus(1)).should.be.rejectedWith(EVMRevert);
         });
+
+        it('should reject payments if campaign is blocked', async function () {
+            await increaseTimeTo(this.startTime);
+            await this.crowdsale.blockCrowdsale({ from: owner });
+            await this.crowdsale.send(value).should.be.rejectedWith(EVMRevert);
+        });
     });
 
     describe('high-level purchase', function () {

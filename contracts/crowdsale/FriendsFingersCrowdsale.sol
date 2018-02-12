@@ -193,8 +193,8 @@ contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Pausa
     // overriding CappedCrowdsale#validPurchase to add extra cap logic
     // @return true if investors can buy at the moment
     function validPurchase() internal view returns (bool) {
-        require(state == State.Active);
-        return super.validPurchase();
+        bool isActive = state == State.Active;
+        return isActive && super.validPurchase();
     }
 
     // We're overriding the fund forwarding from Crowdsale.
@@ -209,23 +209,24 @@ contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Pausa
     function finalization() internal {
         require(state == State.Active);
 
-        if (friendsFingersRatePerMille > 0) {
-            uint256 friendsFingersSupply = cap.mul(rate).mul(friendsFingersRatePerMille).div(1000);
-            token.mint(owner, friendsFingersSupply);
-        }
-
         if (goalReached()) {
+            state = State.Closed;
+            Closed();
+
             if (friendsFingersRatePerMille > 0) {
                 uint256 friendsFingersFee = weiRaised.mul(friendsFingersRatePerMille).div(1000);
                 friendsFingersWallet.transfer(friendsFingersFee);
             }
 
-            state = State.Closed;
-            Closed();
             wallet.transfer(this.balance);
         } else {
             state = State.Refunding;
             RefundsEnabled();
+        }
+
+        if (friendsFingersRatePerMille > 0) {
+            uint256 friendsFingersSupply = cap.mul(rate).mul(friendsFingersRatePerMille).div(1000);
+            token.mint(owner, friendsFingersSupply);
         }
 
         token.transferOwnership(owner);
