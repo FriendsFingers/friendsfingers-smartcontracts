@@ -187,7 +187,7 @@ contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Pausa
      * @dev Create new instance of token contract
      */
     function createTokenContract() internal returns (MintableToken) {
-        return MintableToken(address(0x0));
+        return MintableToken(address(0));
     }
 
     // overriding CappedCrowdsale#validPurchase to add extra cap logic

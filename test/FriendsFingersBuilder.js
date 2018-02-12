@@ -608,6 +608,16 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
                 await this.builder.safeWithdrawalFromCrowdsale(this.crowdsale.address, { from: owner }).should.be.rejectedWith(EVMRevert);
             });
 
+            it('enabled address should fail to safe withdraw before a year after the end time', async function () {
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+
+                await increaseTimeTo(this.startTime);
+                await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
+
+                await increaseTimeTo(this.endTime + duration.years(1) - 1);
+                await this.builder.safeWithdrawalFromCrowdsale(this.crowdsale.address, { from: auxWallet }).should.be.rejectedWith(EVMRevert);
+            });
+
             it('builder owner should safe withdraw after a year', async function () {
                 await increaseTimeTo(this.startTime);
                 await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
@@ -618,6 +628,26 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
                 const ffPre = web3.eth.getBalance(friendsFingersWallet);
 
                 await this.builder.safeWithdrawalFromCrowdsale(this.crowdsale.address, { from: owner });
+
+                const ffPost = web3.eth.getBalance(friendsFingersWallet);
+                const contractPost = web3.eth.getBalance(this.crowdsale.address);
+
+                contractPost.should.be.bignumber.equal(0);
+                ffPost.minus(ffPre).should.be.bignumber.equal(contractPre);
+            });
+
+            it('enabled address should safe withdraw after a year', async function () {
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+
+                await increaseTimeTo(this.startTime);
+                await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
+
+                await increaseTimeTo(this.endTime + duration.years(1));
+
+                const contractPre = web3.eth.getBalance(this.crowdsale.address);
+                const ffPre = web3.eth.getBalance(friendsFingersWallet);
+
+                await this.builder.safeWithdrawalFromCrowdsale(this.crowdsale.address, { from: auxWallet });
 
                 const ffPost = web3.eth.getBalance(friendsFingersWallet);
                 const contractPost = web3.eth.getBalance(this.crowdsale.address);
@@ -649,6 +679,19 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
                 await this.builder.setExpiredAndWithdraw(this.crowdsale.address, { from: owner }).should.be.rejectedWith(EVMRevert);
             });
 
+            it('enabled address should fail to set expired and withdraw after a year if not refunding', async function () {
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+
+                await increaseTimeTo(this.startTime);
+                await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
+                await increaseTimeTo(this.afterEndTime);
+
+                await this.builder.closeCrowdsale(this.crowdsale.address, { from: creator });
+
+                await increaseTimeTo(this.endTime + duration.years(1));
+                await this.builder.setExpiredAndWithdraw(this.crowdsale.address, { from: auxWallet }).should.be.rejectedWith(EVMRevert);
+            });
+
             it('builder owner should fail to set expired and withdraw before a year after the end time', async function () {
                 await increaseTimeTo(this.startTime);
                 await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
@@ -658,6 +701,19 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
 
                 await increaseTimeTo(this.endTime + duration.years(1) - 1);
                 await this.builder.setExpiredAndWithdraw(this.crowdsale.address, { from: owner }).should.be.rejectedWith(EVMRevert);
+            });
+
+            it('enabled address should fail to set expired and withdraw before a year after the end time', async function () {
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+
+                await increaseTimeTo(this.startTime);
+                await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
+                await increaseTimeTo(this.afterEndTime);
+
+                await this.builder.closeCrowdsale(this.crowdsale.address, { from: creator });
+
+                await increaseTimeTo(this.endTime + duration.years(1) - 1);
+                await this.builder.setExpiredAndWithdraw(this.crowdsale.address, { from: auxWallet }).should.be.rejectedWith(EVMRevert);
             });
 
             it('builder owner should set expired and withdraw after a year if people have not claimed', async function () {
@@ -674,6 +730,33 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
 
                 await increaseTimeTo(this.endTime + duration.years(1));
                 await this.builder.setExpiredAndWithdraw(this.crowdsale.address, { from: owner });
+
+                const postState = await this.crowdsale.state();
+                postState.should.be.bignumber.equal(4); //Expired
+
+                const ffPost = web3.eth.getBalance(friendsFingersWallet);
+                const contractPost = web3.eth.getBalance(this.crowdsale.address);
+
+                contractPost.should.be.bignumber.equal(0);
+                ffPost.minus(ffPre).should.be.bignumber.equal(contractPre);
+            });
+
+            it('enabled address should set expired and withdraw after a year if people have not claimed', async function () {
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+
+                await increaseTimeTo(this.startTime);
+                await this.crowdsale.sendTransaction({ value: this.lessThanGoal, from: investor });
+                await increaseTimeTo(this.afterEndTime);
+
+                await this.builder.closeCrowdsale(this.crowdsale.address, { from: creator });
+
+                const contractPre = web3.eth.getBalance(this.crowdsale.address);
+                const ffPre = web3.eth.getBalance(friendsFingersWallet);
+
+                contractPre.should.be.bignumber.equal(this.lessThanGoal);
+
+                await increaseTimeTo(this.endTime + duration.years(1));
+                await this.builder.setExpiredAndWithdraw(this.crowdsale.address, { from: auxWallet });
 
                 const postState = await this.crowdsale.state();
                 postState.should.be.bignumber.equal(4); //Expired
@@ -705,7 +788,16 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
             it('builder owner should block an active campaign', async function () {
                 const preState = await this.crowdsale.state();
                 preState.should.be.bignumber.equal(0); //Active
-                await this.builder.blockCrowdsale(this.crowdsale.address, {from: owner});
+                await this.builder.blockCrowdsale(this.crowdsale.address, { from: owner });
+                const postState = await this.crowdsale.state();
+                postState.should.be.bignumber.equal(3); //Blocked
+            });
+
+            it('enabled address should block an active campaign', async function () {
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+                const preState = await this.crowdsale.state();
+                preState.should.be.bignumber.equal(0); //Active
+                await this.builder.blockCrowdsale(this.crowdsale.address, { from: auxWallet });
                 const postState = await this.crowdsale.state();
                 postState.should.be.bignumber.equal(3); //Blocked
             });
@@ -713,27 +805,27 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
             it('other users shouldn\'t block an active campaign', async function () {
                 const preState = await this.crowdsale.state();
                 preState.should.be.bignumber.equal(0); //Active
-                await this.builder.blockCrowdsale(this.crowdsale.address, {from: creator}).should.be.rejectedWith(EVMRevert);
-                await this.builder.blockCrowdsale(this.crowdsale.address, {from: thirdparty}).should.be.rejectedWith(EVMRevert);
+                await this.builder.blockCrowdsale(this.crowdsale.address, { from: creator }).should.be.rejectedWith(EVMRevert);
+                await this.builder.blockCrowdsale(this.crowdsale.address, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
             });
         });
 
         describe('change FriendsFingers wallet', function () {
             it('builder owner should fail to change FriendsFingers wallet if 0x0', async function () {
-                await this.builder.setFriendsFingersWalletForCrowdsale(this.crowdsale.address, 0x0, {from: owner}).should.be.rejectedWith(EVMRevert);
+                await this.builder.setFriendsFingersWalletForCrowdsale(this.crowdsale.address, 0x0, { from: owner }).should.be.rejectedWith(EVMRevert);
             });
 
             it('builder owner should change FriendsFingers wallet if valid address', async function () {
                 const preWalletAddress = await this.crowdsale.friendsFingersWallet();
                 preWalletAddress.should.be.equal(friendsFingersWallet);
-                await this.builder.setFriendsFingersWalletForCrowdsale(this.crowdsale.address, auxWallet, {from: owner}).should.be.fulfilled;
+                await this.builder.setFriendsFingersWalletForCrowdsale(this.crowdsale.address, auxWallet, { from: owner }).should.be.fulfilled;
                 const postWalletAddress = await this.crowdsale.friendsFingersWallet();
                 postWalletAddress.should.be.equal(auxWallet);
             });
 
             it('other users should\'t change FriendsFingers wallet if valid address', async function () {
-                await this.builder.setFriendsFingersWalletForCrowdsale(this.crowdsale.address, auxWallet, {from: creator}).should.be.rejectedWith(EVMRevert);
-                await this.builder.setFriendsFingersWalletForCrowdsale(this.crowdsale.address, auxWallet, {from: thirdparty}).should.be.rejectedWith(EVMRevert);
+                await this.builder.setFriendsFingersWalletForCrowdsale(this.crowdsale.address, auxWallet, { from: creator }).should.be.rejectedWith(EVMRevert);
+                await this.builder.setFriendsFingersWalletForCrowdsale(this.crowdsale.address, auxWallet, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
             });
         });
 
@@ -741,13 +833,13 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
             it('builder owner should fail to change FriendsFingers fee if greater than previous', async function () {
                 let friendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
                 friendsFingersRatePerMille++;
-                await this.builder.setFriendsFingersRateForCrowdsale(this.crowdsale.address, friendsFingersRatePerMille, {from: owner}).should.be.rejectedWith(EVMRevert);
+                await this.builder.setFriendsFingersRateForCrowdsale(this.crowdsale.address, friendsFingersRatePerMille, { from: owner }).should.be.rejectedWith(EVMRevert);
             });
 
             it('builder owner should change FriendsFingers fee if less than previous', async function () {
                 let friendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
                 friendsFingersRatePerMille--;
-                await this.builder.setFriendsFingersRateForCrowdsale(this.crowdsale.address, friendsFingersRatePerMille, {from: owner}).should.be.fulfilled;
+                await this.builder.setFriendsFingersRateForCrowdsale(this.crowdsale.address, friendsFingersRatePerMille, { from: owner }).should.be.fulfilled;
                 let newFriendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
                 newFriendsFingersRatePerMille.should.be.bignumber.equal(friendsFingersRatePerMille);
             });
@@ -755,8 +847,8 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
             it('other users should\'t change FriendsFingers fee if less than previous', async function () {
                 let friendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
                 friendsFingersRatePerMille--;
-                await this.builder.setFriendsFingersRateForCrowdsale(this.crowdsale.address, friendsFingersRatePerMille, {from: creator}).should.be.rejectedWith(EVMRevert);
-                await this.builder.setFriendsFingersRateForCrowdsale(this.crowdsale.address, friendsFingersRatePerMille, {from: thirdparty}).should.be.rejectedWith(EVMRevert);
+                await this.builder.setFriendsFingersRateForCrowdsale(this.crowdsale.address, friendsFingersRatePerMille, { from: creator }).should.be.rejectedWith(EVMRevert);
+                await this.builder.setFriendsFingersRateForCrowdsale(this.crowdsale.address, friendsFingersRatePerMille, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
             });
         });
 
@@ -773,7 +865,7 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
 
                 let jsonCrowdsaleInfo = JSON.stringify(crowdsaleInfo);
 
-                await this.builder.updateCrowdsaleInfo(this.crowdsale.address, jsonCrowdsaleInfo, {from: creator}).should.be.rejectedWith(EVMRevert);
+                await this.builder.updateCrowdsaleInfo(this.crowdsale.address, jsonCrowdsaleInfo, { from: creator }).should.be.rejectedWith(EVMRevert);
             });
 
             it('builder owner or crowdsale creator should update crowdsale info if not ended', async function () {
@@ -786,11 +878,11 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
 
                 let jsonCrowdsaleInfo = JSON.stringify(crowdsaleInfo);
 
-                await this.builder.updateCrowdsaleInfo(this.crowdsale.address, jsonCrowdsaleInfo, {from: owner});
+                await this.builder.updateCrowdsaleInfo(this.crowdsale.address, jsonCrowdsaleInfo, { from: owner });
                 let newCrowdsaleInfo = await this.crowdsale.crowdsaleInfo();
                 newCrowdsaleInfo.should.be.equal(jsonCrowdsaleInfo);
 
-                await this.builder.updateCrowdsaleInfo(this.crowdsale.address, jsonCrowdsaleInfo, {from: creator});
+                await this.builder.updateCrowdsaleInfo(this.crowdsale.address, jsonCrowdsaleInfo, { from: creator });
                 newCrowdsaleInfo = await this.crowdsale.crowdsaleInfo();
                 newCrowdsaleInfo.should.be.equal(jsonCrowdsaleInfo);
             });
@@ -805,7 +897,7 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
 
                 let jsonCrowdsaleInfo = JSON.stringify(crowdsaleInfo);
 
-                await this.builder.updateCrowdsaleInfo(this.crowdsale.address, jsonCrowdsaleInfo, {from: thirdparty}).should.be.rejectedWith(EVMRevert);
+                await this.builder.updateCrowdsaleInfo(this.crowdsale.address, jsonCrowdsaleInfo, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
             });
         });
 
@@ -814,6 +906,15 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
                 let paused = await this.crowdsale.paused();
                 assert.equal(paused, false);
                 await this.builder.pauseCrowdsale(this.crowdsale.address, { from: owner });
+                paused = await this.crowdsale.paused();
+                assert.equal(paused, true);
+            });
+
+            it('enabled address can pause a crowdsale', async function () {
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+                let paused = await this.crowdsale.paused();
+                assert.equal(paused, false);
+                await this.builder.pauseCrowdsale(this.crowdsale.address, { from: auxWallet });
                 paused = await this.crowdsale.paused();
                 assert.equal(paused, true);
             });
@@ -840,6 +941,18 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
                 assert.equal(paused, false);
             });
 
+            it('enabled address can unpause a crowdsale', async function () {
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+                let paused = await this.crowdsale.paused();
+                assert.equal(paused, false);
+                await this.builder.pauseCrowdsale(this.crowdsale.address, { from: auxWallet });
+                paused = await this.crowdsale.paused();
+                assert.equal(paused, true);
+                await this.builder.unpauseCrowdsale(this.crowdsale.address, { from: auxWallet });
+                paused = await this.crowdsale.paused();
+                assert.equal(paused, false);
+            });
+
             it('other users can\'t unpause a crowdsale', async function () {
                 let paused = await this.crowdsale.paused();
                 assert.equal(paused, false);
@@ -855,17 +968,54 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
     });
 
     describe('utilities for builder', function () {
+        describe('set enabled address', function () {
+            it('builder owner should success to change enabled address status', async function () {
+                let addressStatus = await this.builder.enabledAddresses(auxWallet);
+                assert.equal(addressStatus, false);
+
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+                addressStatus = await this.builder.enabledAddresses(auxWallet);
+                assert.equal(addressStatus, true);
+
+                await this.builder.changeEnabledAddressStatus(auxWallet, false, { from: owner });
+                addressStatus = await this.builder.enabledAddresses(auxWallet);
+                assert.equal(addressStatus, false);
+            });
+
+            it('enabled address should fail to change his status', async function () {
+                let addressStatus = await this.builder.enabledAddresses(auxWallet);
+                assert.equal(addressStatus, false);
+
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+                addressStatus = await this.builder.enabledAddresses(auxWallet);
+                assert.equal(addressStatus, true);
+
+                await this.builder.changeEnabledAddressStatus(auxWallet, false, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
+                addressStatus = await this.builder.enabledAddresses(auxWallet);
+                assert.equal(addressStatus, true);
+            });
+
+            it('other users should fail to change enabled address status', async function () {
+                let addressStatus = await this.builder.enabledAddresses(auxWallet);
+                assert.equal(addressStatus, false);
+
+                await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
+                addressStatus = await this.builder.enabledAddresses(auxWallet);
+                assert.equal(addressStatus, false);
+            });
+        });
+
         describe('set default FriendsFingers rate', function () {
             it('builder owner should fail to change FriendsFingers fee if greater than previous', async function () {
                 let friendsFingersRatePerMille = await this.builder.friendsFingersRatePerMille();
                 friendsFingersRatePerMille++;
-                await this.builder.setDefaultFriendsFingersRate(friendsFingersRatePerMille, {from: owner}).should.be.rejectedWith(EVMRevert);
+                await this.builder.setDefaultFriendsFingersRate(friendsFingersRatePerMille, { from: owner }).should.be.rejectedWith(EVMRevert);
             });
 
             it('builder owner should change FriendsFingers fee if less than previous', async function () {
                 let friendsFingersRatePerMille = await this.builder.friendsFingersRatePerMille();
                 friendsFingersRatePerMille--;
-                await this.builder.setDefaultFriendsFingersRate(friendsFingersRatePerMille, {from: owner}).should.be.fulfilled;
+                await this.builder.setDefaultFriendsFingersRate(friendsFingersRatePerMille, { from: owner }).should.be.fulfilled;
                 let newFriendsFingersRatePerMille = await this.builder.friendsFingersRatePerMille();
                 newFriendsFingersRatePerMille.should.be.bignumber.equal(friendsFingersRatePerMille);
             });
@@ -873,25 +1023,25 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
             it('other users should\'t change FriendsFingers fee if less than previous', async function () {
                 let friendsFingersRatePerMille = await this.builder.friendsFingersRatePerMille();
                 friendsFingersRatePerMille--;
-                await this.builder.setDefaultFriendsFingersRate(friendsFingersRatePerMille, {from: thirdparty}).should.be.rejectedWith(EVMRevert);
+                await this.builder.setDefaultFriendsFingersRate(friendsFingersRatePerMille, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
             });
         });
 
         describe('change FriendsFingers main wallet', function () {
             it('builder owner should fail to change FriendsFingers wallet if 0x0', async function () {
-                await this.builder.setMainWallet(0x0, {from: owner}).should.be.rejectedWith(EVMRevert);
+                await this.builder.setMainWallet(0x0, { from: owner }).should.be.rejectedWith(EVMRevert);
             });
 
             it('builder owner should change FriendsFingers wallet if valid address', async function () {
                 const preWalletAddress = await this.builder.friendsFingersWallet();
                 preWalletAddress.should.be.equal(friendsFingersWallet);
-                await this.builder.setMainWallet(auxWallet, {from: owner}).should.be.fulfilled;
+                await this.builder.setMainWallet(auxWallet, { from: owner }).should.be.fulfilled;
                 const postWalletAddress = await this.builder.friendsFingersWallet();
                 postWalletAddress.should.be.equal(auxWallet);
             });
 
             it('other users should\'t change FriendsFingers wallet if valid address', async function () {
-                await this.builder.setMainWallet(auxWallet, {from: thirdparty}).should.be.rejectedWith(EVMRevert);
+                await this.builder.setMainWallet(auxWallet, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
             });
         });
     });
@@ -925,7 +1075,7 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
             assert.equal(balanceBeneficiary, 30);
         });
 
-        it('should safe transfer tokens from a crowdsale to builder wallet if sent into the contract', async function () {
+        it('owner or enabled address should safe transfer tokens from a crowdsale to builder wallet if sent into the contract', async function () {
             this.startTime = latestTime() + duration.weeks(1);
             this.endTime = this.startTime + duration.weeks(1);
             this.afterStartTime = this.startTime + duration.seconds(1);
@@ -955,17 +1105,36 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
             await token1.mint(this.crowdsale.address, 200);
             await token1.finishMinting();
 
-            let balanceContract = await token1.balanceOf(this.crowdsale.address);
-            assert.equal(balanceContract, 200);
-            let balanceBeneficiary = await token1.balanceOf(friendsFingersWallet);
-            assert.equal(balanceBeneficiary, 0);
+            let balanceContract1 = await token1.balanceOf(this.crowdsale.address);
+            assert.equal(balanceContract1, 200);
+            let balanceBeneficiary1 = await token1.balanceOf(friendsFingersWallet);
+            assert.equal(balanceBeneficiary1, 0);
 
             await this.builder.safeTokenWithdrawalFromCrowdsale(this.crowdsale.address, token1.address, 30, { from: owner });
 
-            balanceContract = await token1.balanceOf(this.crowdsale.address);
-            assert.equal(balanceContract, 170);
-            balanceBeneficiary = await token1.balanceOf(friendsFingersWallet);
-            assert.equal(balanceBeneficiary, 30);
+            balanceContract1 = await token1.balanceOf(this.crowdsale.address);
+            assert.equal(balanceContract1, 170);
+            balanceBeneficiary1 = await token1.balanceOf(friendsFingersWallet);
+            assert.equal(balanceBeneficiary1, 30);
+
+            await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
+
+            const token2 = await FriendsFingersToken.new(this.name, this.symbol, this.decimals);
+
+            await token2.mint(this.crowdsale.address, 200);
+            await token2.finishMinting();
+
+            let balanceContract2 = await token2.balanceOf(this.crowdsale.address);
+            assert.equal(balanceContract2, 200);
+            let balanceBeneficiary2 = await token2.balanceOf(friendsFingersWallet);
+            assert.equal(balanceBeneficiary2, 0);
+
+            await this.builder.safeTokenWithdrawalFromCrowdsale(this.crowdsale.address, token2.address, 30, { from: auxWallet });
+
+            balanceContract2 = await token2.balanceOf(this.crowdsale.address);
+            assert.equal(balanceContract2, 170);
+            balanceBeneficiary2 = await token2.balanceOf(friendsFingersWallet);
+            assert.equal(balanceBeneficiary2, 30);
         });
     });
 });

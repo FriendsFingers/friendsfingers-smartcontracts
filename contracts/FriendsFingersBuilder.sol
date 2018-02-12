@@ -16,10 +16,16 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
     string public website = "https://www.friendsfingers.com";
     uint256 public friendsFingersRatePerMille = 50; //5%
     address public friendsFingersWallet;
+    mapping (address => bool) public enabledAddresses;
 
     uint256 public crowdsaleCount = 0;
     mapping (uint256 => address) public crowdsaleList;
     mapping (address => address) public crowdsaleCreators;
+
+    modifier onlyOwnerOrEnabledAddress() {
+        require(enabledAddresses[msg.sender] || msg.sender == owner);
+        _;
+    }
 
     modifier onlyOwnerOrCreator(address _ffCrowdsale) {
         require(msg.sender == crowdsaleCreators[_ffCrowdsale] || msg.sender == owner);
@@ -157,6 +163,11 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
 
     // Only builder owner methods
 
+    function changeEnabledAddressStatus(address _address, bool _status) onlyOwner public {
+        require(_address != address(0));
+        enabledAddresses[_address] = _status;
+    }
+
     function setDefaultFriendsFingersRate(uint256 _newFriendsFingersRatePerMille) onlyOwner public {
         require(_newFriendsFingersRatePerMille >= 0);
         require(_newFriendsFingersRatePerMille < friendsFingersRatePerMille);
@@ -178,34 +189,34 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
         ffCrowdsale.setFriendsFingersWallet(_newFriendsFingersWallet);
     }
 
-    // Emergency methods (only builder owner)
+    // Emergency methods (only builder owner or enabled addresses)
 
-    function pauseCrowdsale(address _ffCrowdsale) onlyOwner public {
+    function pauseCrowdsale(address _ffCrowdsale) onlyOwnerOrEnabledAddress public {
         FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
         ffCrowdsale.pause();
     }
 
-    function unpauseCrowdsale(address _ffCrowdsale) onlyOwner public {
+    function unpauseCrowdsale(address _ffCrowdsale) onlyOwnerOrEnabledAddress public {
         FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
         ffCrowdsale.unpause();
     }
 
-    function blockCrowdsale(address _ffCrowdsale) onlyOwner public {
+    function blockCrowdsale(address _ffCrowdsale) onlyOwnerOrEnabledAddress public {
         FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
         ffCrowdsale.blockCrowdsale();
     }
 
-    function safeTokenWithdrawalFromCrowdsale(address _ffCrowdsale, address _tokenAddress, uint256 _tokens) onlyOwner public {
+    function safeTokenWithdrawalFromCrowdsale(address _ffCrowdsale, address _tokenAddress, uint256 _tokens) onlyOwnerOrEnabledAddress public {
         FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
         ffCrowdsale.transferAnyERC20Token(_tokenAddress, _tokens, friendsFingersWallet);
     }
 
-    function safeWithdrawalFromCrowdsale(address _ffCrowdsale) onlyOwner public {
+    function safeWithdrawalFromCrowdsale(address _ffCrowdsale) onlyOwnerOrEnabledAddress public {
         FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
         ffCrowdsale.safeWithdrawal();
     }
 
-    function setExpiredAndWithdraw(address _ffCrowdsale) onlyOwner public {
+    function setExpiredAndWithdraw(address _ffCrowdsale) onlyOwnerOrEnabledAddress public {
         FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
         ffCrowdsale.setExpiredAndWithdraw();
     }
