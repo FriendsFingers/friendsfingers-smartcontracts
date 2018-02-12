@@ -89,6 +89,10 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
         friendsFingersWallet
         );
 
+        if (crowdsaleCount > 1) {
+            ffCrowdsale.pause();
+        }
+
         token.transferOwnership(address(ffCrowdsale));
 
         addCrowdsaleToList(address(ffCrowdsale));

@@ -91,6 +91,34 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
             this.token = FriendsFingersToken.at(await this.crowdsale.token());
         });
 
+        it('first crowdsale should start as unpaused', async function () {
+            let paused = await this.crowdsale.paused();
+            assert.equal(paused, false);
+        });
+
+        it('later crowdsale should start as paused', async function () {
+            await this.builder.startCrowdsale(
+                this.name,
+                this.symbol,
+                this.decimals,
+                this.cap,
+                this.goal,
+                this.creatorSupply,
+                this.startTime,
+                this.endTime,
+                this.rate,
+                wallet,
+                this.crowdsaleInfo,
+                { from: creator }
+            );
+
+            const crowdsaleCount = await this.builder.crowdsaleCount();
+            this.laterCrowdsale = FriendsFingersCrowdsale.at(await this.builder.crowdsaleList(crowdsaleCount));
+
+            let paused = await this.laterCrowdsale.paused();
+            assert.equal(paused, true);
+        });
+
         it('crowdsale wallet should have the initial supply', async function () {
             const creatorSupply = await this.token.balanceOf(wallet);
             creatorSupply.should.be.bignumber.equal(this.creatorSupply);
