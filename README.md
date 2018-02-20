@@ -86,6 +86,15 @@ solium -d contracts
 ```
 
 
+## Deployed Smart Contracts
+
+[FriendsFingersBuilder](https://etherscan.io/address/0xf01eab46ade80e599209681a5aaa13260ae8735c) 
+
+[FriendsFingersToken](https://etherscan.io/token/0x3e47d6d9c8c458302ee5aec3f0ae6df9b3ad8f2f)
+
+[FriendsFingersCrowdsale](https://etherscan.io/address/0xa5f5f3803f6174c94f71419834ab91dd2eb7963a) (Round 1) 
+
+
 
 ## Helpful Links
  
