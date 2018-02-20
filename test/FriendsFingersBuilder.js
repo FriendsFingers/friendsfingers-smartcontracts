@@ -632,7 +632,7 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
                 await increaseTimeTo(this.startTime);
                 await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
 
-                await increaseTimeTo(this.endTime + duration.years(1) - 1);
+                await increaseTimeTo(this.endTime + duration.years(1) - duration.days(1));
                 await this.builder.safeWithdrawalFromCrowdsale(this.crowdsale.address, { from: owner }).should.be.rejectedWith(EVMRevert);
             });
 
@@ -642,7 +642,7 @@ contract('FriendsFingersBuilder', function ([_, owner, creator, investor, wallet
                 await increaseTimeTo(this.startTime);
                 await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
 
-                await increaseTimeTo(this.endTime + duration.years(1) - 1);
+                await increaseTimeTo(this.endTime + duration.years(1) - duration.days(1));
                 await this.builder.safeWithdrawalFromCrowdsale(this.crowdsale.address, { from: auxWallet }).should.be.rejectedWith(EVMRevert);
             });
 

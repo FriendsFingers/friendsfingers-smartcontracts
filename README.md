@@ -46,6 +46,9 @@ test
 ```
 
 
+View [test results](https://github.com/friendsfingers/friendsfingers-smartcontracts/blob/master/test/results/test-results.md)
+
+
 
 ## Optional
 

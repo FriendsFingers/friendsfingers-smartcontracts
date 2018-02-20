@@ -580,7 +580,7 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
                 await increaseTimeTo(this.startTime);
                 await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
 
-                await increaseTimeTo(this.endTime + duration.years(1) - duration.seconds(1));
+                await increaseTimeTo(this.endTime + duration.years(1) - duration.days(1));
                 await this.crowdsale.safeWithdrawal({ from: owner }).should.be.rejectedWith(EVMRevert);
             });
 
