@@ -1,0 +1,19 @@
+{
+  "package_name": "friendsfingers-smartcontracts",
+  "version": "1.0.0",
+  "description": "Source code for FriendsFingers Smart Contracts",
+  "authors": [
+    "Vittorio Minacori (https://github.com/vittominacori)"
+  ],
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart",
+    "contracts",
+    "token",
+    "erc20",
+    "truffle",
+    "openzeppelin"
+  ],
+  "license": "MIT"
+}

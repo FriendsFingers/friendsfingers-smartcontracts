@@ -15,11 +15,10 @@ const FriendsFingersToken = artifacts.require('FriendsFingersToken');
 const ContractReceiverImpl = artifacts.require('ContractReceiverImpl');
 
 contract('FriendsFingersToken', function (accounts) {
-
   let obj = {
-    name: "Shaka",
-    symbol: "HAK",
-    decimals: 18
+    name: 'Shaka',
+    symbol: 'HAK',
+    decimals: 18,
   };
 
   describe('should have correct values and properties after construction', function () {
@@ -226,7 +225,7 @@ contract('FriendsFingersToken', function (accounts) {
       let balance1 = await token.balanceOf(auxContract.address);
       assert.equal(balance1, 0);
 
-      await token.approveAndCall(auxContract.address, 100, "test");
+      await token.approveAndCall(auxContract.address, 100, 'test');
 
       balance0 = await token.balanceOf(accounts[0]);
       assert.equal(balance0, 0);
@@ -234,7 +233,7 @@ contract('FriendsFingersToken', function (accounts) {
       assert.equal(balance1, 100);
 
       const data = await auxContract.data();
-      assert.equal(web3.toAscii(data), "test");
+      assert.equal(web3.toAscii(data), 'test');
     });
 
     it('should fail to transfer ETH into the token contract', async function () {

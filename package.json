@@ -4,9 +4,28 @@
   "version": "0.0.1",
   "description": "Source code for FriendsFingers Smart Contracts",
   "keywords": [
-    "Solidity, Truffle, Zeppelin"
+    "solidity",
+    "ethereum",
+    "smart",
+    "contracts",
+    "token",
+    "erc20",
+    "truffle",
+    "openzeppelin"
   ],
   "homepage": "https://www.friendsfingers.com",
+  "scripts": {
+    "dev": "lite-server",
+    "test": "scripts/test.sh",
+    "lint": "eslint migrations test",
+    "lint:fix": "eslint migrations test --fix",
+    "lint:sol": "solium -d contracts",
+    "lint:sol:fix": "solium -d contracts --fix",
+    "lint:all": "npm run lint && npm run lint:sol",
+    "lint:all:fix": "npm run lint:fix && npm run lint:sol:fix",
+    "console": "truffle console",
+    "version": "scripts/version.js"
+  },
   "bugs": {
     "url": "https://github.com/friendsfingers/friendsfingers-smartcontracts/issues"
   },
@@ -28,6 +47,19 @@
     "zeppelin-solidity": "1.6.0"
   },
   "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-standard": "^12.0.0-alpha.0",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "ethjs-abi": "^0.2.1",
+    "ganache-cli": "^6.1.0",
+    "ethereumjs-wallet": "^0.6.0",
+    "solium": "^1.1.7",
+    "truffle": "^4.1.8",
+    "truffle-contract": "^3.0.3",
+    "zeppelin-solidity": "1.6.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "babel-register": "^6.26.0",

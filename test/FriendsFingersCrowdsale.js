@@ -14,8 +14,9 @@ const should = require('chai')
 const FriendsFingersCrowdsale = artifacts.require('FriendsFingersCrowdsale');
 const FriendsFingersToken = artifacts.require('FriendsFingersToken');
 
-contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purchaser, friendsFingersWallet, thirdparty, auxWallet]) {
-
+contract('FriendsFingersCrowdsale', function (
+  [_, owner, investor, wallet, purchaser, friendsFingersWallet, thirdparty, auxWallet]
+) {
   const value = ether(1);
 
   before(async function () {
@@ -24,8 +25,8 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
   });
 
   beforeEach(async function () {
-    this.name = "Shaka";
-    this.symbol = "HAK";
+    this.name = 'Shaka';
+    this.symbol = 'HAK';
     this.decimals = 18;
 
     this.id = 10;
@@ -47,10 +48,10 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
     this.expectedTokenAmount = this.rate.mul(value);
 
     this.crowdsaleInfo = JSON.stringify({
-      title: "Test Crowdsale",
-      description: "Lorem ipsum", //description
-      url: "http://xxx", //official url
-      logo: "http://yyy" //official logo
+      title: 'Test Crowdsale',
+      description: 'Lorem ipsum', // description
+      url: 'http://xxx', // official url
+      logo: 'http://yyy', // official logo
     });
 
     this.token = await FriendsFingersToken.new(this.name, this.symbol, this.decimals);
@@ -506,7 +507,9 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
 
       const ffPost = await this.token.balanceOf(crowdsaleBuilder);
 
-      ffPost.minus(ffPre).should.be.bignumber.equal(this.cap.mul(this.rate).mul(this.friendsFingersRatePerMille).div(1000));
+      ffPost.minus(ffPre).should.be.bignumber.equal(
+        this.cap.mul(this.rate).mul(this.friendsFingersRatePerMille).div(1000)
+      );
     });
 
     it('should forward funds to wallet after end if goal was reached', async function () {
@@ -528,7 +531,9 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
       const walletPost = web3.eth.getBalance(wallet);
       const ffPost = web3.eth.getBalance(friendsFingersWallet);
 
-      walletPost.minus(walletPre).should.be.bignumber.equal(this.goal.mul(1000 - this.friendsFingersRatePerMille).div(1000));
+      walletPost.minus(walletPre).should.be.bignumber.equal(
+        this.goal.mul(1000 - this.friendsFingersRatePerMille).div(1000)
+      );
       ffPost.minus(ffPre).should.be.bignumber.equal(this.goal.mul(this.friendsFingersRatePerMille).div(1000));
     });
   });
@@ -542,7 +547,9 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
       it('should reject payments after start', async function () {
         await increaseTimeTo(this.startTime);
         await this.crowdsale.send(value).should.be.rejectedWith(EVMRevert);
-        await this.crowdsale.buyTokens(investor, { value: value, from: purchaser }).should.be.rejectedWith(EVMRevert);
+        await this.crowdsale.buyTokens(
+          investor, { value: value, from: purchaser }
+        ).should.be.rejectedWith(EVMRevert);
       });
 
       it('should reject payments within cap', async function () {
@@ -650,7 +657,7 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
         await this.crowdsale.setExpiredAndWithdraw({ from: owner });
 
         const postState = await this.crowdsale.state();
-        postState.should.be.bignumber.equal(4); //Expired
+        postState.should.be.bignumber.equal(4); // Expired
 
         const ffPost = web3.eth.getBalance(friendsFingersWallet);
         const contractPost = web3.eth.getBalance(this.crowdsale.address);
@@ -659,19 +666,20 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
         ffPost.minus(ffPre).should.be.bignumber.equal(contractPre);
       });
 
-      it('third party shouldn\'t set expired and withdraw after a year if people have not claimed', async function () {
-        await increaseTimeTo(this.startTime);
-        await this.crowdsale.sendTransaction({ value: this.lessThanGoal, from: investor });
-        await increaseTimeTo(this.afterEndTime);
+      it('third party shouldn\'t set expired and withdraw after a year if people have not claimed',
+        async function () {
+          await increaseTimeTo(this.startTime);
+          await this.crowdsale.sendTransaction({ value: this.lessThanGoal, from: investor });
+          await increaseTimeTo(this.afterEndTime);
 
-        await this.crowdsale.finalize({ from: owner });
+          await this.crowdsale.finalize({ from: owner });
 
-        const contractPre = web3.eth.getBalance(this.crowdsale.address);
-        contractPre.should.be.bignumber.equal(this.lessThanGoal);
+          const contractPre = web3.eth.getBalance(this.crowdsale.address);
+          contractPre.should.be.bignumber.equal(this.lessThanGoal);
 
-        await increaseTimeTo(this.endTime + duration.years(1));
-        await this.crowdsale.setExpiredAndWithdraw({ from: thirdparty }).should.be.rejectedWith(EVMRevert);
-      });
+          await increaseTimeTo(this.endTime + duration.years(1));
+          await this.crowdsale.setExpiredAndWithdraw({ from: thirdparty }).should.be.rejectedWith(EVMRevert);
+        });
     });
 
     describe('block campaign', function () {
@@ -683,21 +691,21 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
         await this.crowdsale.finalize({ from: owner });
 
         const preState = await this.crowdsale.state();
-        preState.should.be.bignumber.equal(2); //Closed
+        preState.should.be.bignumber.equal(2); // Closed
         await this.crowdsale.blockCrowdsale({ from: owner }).should.be.rejectedWith(EVMRevert);
       });
 
       it('owner should block an active campaign', async function () {
         const preState = await this.crowdsale.state();
-        preState.should.be.bignumber.equal(0); //Active
+        preState.should.be.bignumber.equal(0); // Active
         await this.crowdsale.blockCrowdsale({ from: owner });
         const postState = await this.crowdsale.state();
-        postState.should.be.bignumber.equal(3); //Blocked
+        postState.should.be.bignumber.equal(3); // Blocked
       });
 
       it('third party shouldn\'t block an active campaign', async function () {
         const preState = await this.crowdsale.state();
-        preState.should.be.bignumber.equal(0); //Active
+        preState.should.be.bignumber.equal(0); // Active
         await this.crowdsale.blockCrowdsale({ from: thirdparty }).should.be.rejectedWith(EVMRevert);
       });
     });
@@ -716,7 +724,9 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
       });
 
       it('third party shouldn\'t change FriendsFingers wallet if valid address', async function () {
-        await this.crowdsale.setFriendsFingersWallet(auxWallet, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
+        await this.crowdsale.setFriendsFingersWallet(
+          auxWallet, { from: thirdparty }
+        ).should.be.rejectedWith(EVMRevert);
       });
     });
 
@@ -724,13 +734,17 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
       it('owner should fail to change FriendsFingers fee if greater than previous', async function () {
         let friendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
         friendsFingersRatePerMille++;
-        await this.crowdsale.setFriendsFingersRate(friendsFingersRatePerMille, { from: owner }).should.be.rejectedWith(EVMRevert);
+        await this.crowdsale.setFriendsFingersRate(
+          friendsFingersRatePerMille, { from: owner }
+        ).should.be.rejectedWith(EVMRevert);
       });
 
       it('owner should change FriendsFingers fee if less than previous', async function () {
         let friendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
         friendsFingersRatePerMille--;
-        await this.crowdsale.setFriendsFingersRate(friendsFingersRatePerMille, { from: owner }).should.be.fulfilled;
+        await this.crowdsale.setFriendsFingersRate(
+          friendsFingersRatePerMille, { from: owner }
+        ).should.be.fulfilled;
         let newFriendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
         newFriendsFingersRatePerMille.should.be.bignumber.equal(friendsFingersRatePerMille);
       });
@@ -738,7 +752,9 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
       it('third party shouldn\'t change FriendsFingers fee if less than previous', async function () {
         let friendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
         friendsFingersRatePerMille--;
-        await this.crowdsale.setFriendsFingersRate(friendsFingersRatePerMille, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
+        await this.crowdsale.setFriendsFingersRate(
+          friendsFingersRatePerMille, { from: thirdparty }
+        ).should.be.rejectedWith(EVMRevert);
       });
     });
 
@@ -747,21 +763,23 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
         await increaseTimeTo(this.afterEndTime);
 
         let jsonCrowdsaleInfo = JSON.stringify({
-          title: "Test Crowdsale 2",
-          description: "Lorem ipsum 2", //description
-          url: "http://xxx2", //official url
-          logo: "http://yyy2" //official logo
+          title: 'Test Crowdsale 2',
+          description: 'Lorem ipsum 2', // description
+          url: 'http://xxx2', // official url
+          logo: 'http://yyy2', // official logo
         });
 
-        await this.crowdsale.updateCrowdsaleInfo(jsonCrowdsaleInfo, { from: owner }).should.be.rejectedWith(EVMRevert);
+        await this.crowdsale.updateCrowdsaleInfo(
+          jsonCrowdsaleInfo, { from: owner }
+        ).should.be.rejectedWith(EVMRevert);
       });
 
       it('owner should update crowdsale info if not ended', async function () {
         let jsonCrowdsaleInfo = JSON.stringify({
-          title: "Test Crowdsale 2",
-          description: "Lorem ipsum 2", //description
-          url: "http://xxx2", //official url
-          logo: "http://yyy2" //official logo
+          title: 'Test Crowdsale 2',
+          description: 'Lorem ipsum 2', // description
+          url: 'http://xxx2', // official url
+          logo: 'http://yyy2', // official logo
         });
 
         await this.crowdsale.updateCrowdsaleInfo(jsonCrowdsaleInfo, { from: owner });
@@ -773,13 +791,15 @@ contract('FriendsFingersCrowdsale', function ([_, owner, investor, wallet, purch
 
       it('third party shouldn\'t update crowdsale info if not ended', async function () {
         let jsonCrowdsaleInfo = JSON.stringify({
-          title: "Test Crowdsale 2",
-          description: "Lorem ipsum 2", //description
-          url: "http://xxx2", //official url
-          logo: "http://yyy2" //official logo
+          title: 'Test Crowdsale 2',
+          description: 'Lorem ipsum 2', // description
+          url: 'http://xxx2', // official url
+          logo: 'http://yyy2', // official logo
         });
 
-        await this.crowdsale.updateCrowdsaleInfo(jsonCrowdsaleInfo, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
+        await this.crowdsale.updateCrowdsaleInfo(
+          jsonCrowdsaleInfo, { from: thirdparty }
+        ).should.be.rejectedWith(EVMRevert);
       });
     });
   });
