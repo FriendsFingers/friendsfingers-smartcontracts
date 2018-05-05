@@ -1,5 +1,8 @@
 # FriendsFingers Smart Contracts
 
+[![Build Status](https://travis-ci.org/friendsfingers/friendsfingers-smartcontracts.svg?branch=master)](https://travis-ci.org/friendsfingers/friendsfingers-smartcontracts)
+
+
 The source code for FriendsFingers Smart Contracts. 
  
 Live here [https://www.friendsfingers.com](https://www.friendsfingers.com/)
@@ -13,8 +16,8 @@ FriendsFingers helps startups and small businesses to start a trustworthy Crowds
 Install Truffle and dependencies
 
 ```bash
-npm install -g truffle     // Version 4.1.8+ required.
-npm install -g solc        // Version 0.4.23+ required
+npm install -g truffle     // Version 4.0.6+ required.
+npm install -g solc        // Version 0.4.19+ required
 npm install
 ```
  
