@@ -1,7 +1,7 @@
 # FriendsFingers Smart Contracts
 
 [![Build Status](https://travis-ci.org/friendsfingers/friendsfingers-smartcontracts.svg?branch=master)](https://travis-ci.org/friendsfingers/friendsfingers-smartcontracts)
-
+[![Coverage Status](https://coveralls.io/repos/github/friendsfingers/friendsfingers-smartcontracts/badge.svg?branch=master)](https://coveralls.io/github/friendsfingers/friendsfingers-smartcontracts?branch=master)
 
 The source code for FriendsFingers Smart Contracts. 
  
