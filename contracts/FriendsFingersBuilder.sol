@@ -46,7 +46,7 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
   /**
    * @notice This is for people who want to donate ETH to FriendsFingers
    */
-  function () public payable {
+  function () external payable {
     require(msg.value > 0, "Value must be greater than zero");
     friendsFingersWallet.transfer(msg.value);
   }
