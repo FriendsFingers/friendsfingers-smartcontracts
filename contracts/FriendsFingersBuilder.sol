@@ -307,7 +307,7 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
     crowdsaleList[crowdsaleCount] = _ffc;
     crowdsaleCreators[_ffc] = msg.sender;
 
-    emit CrowdsaleStarted(ffc);
+    emit CrowdsaleStarted(_ffc);
   }
 
 }
