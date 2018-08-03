@@ -1,8 +1,11 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
+// solium-disable-next-line max-len
 import "openzeppelin-solidity/contracts/crowdsale/emission/MintedCrowdsale.sol";
+// solium-disable-next-line max-len
 import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol";
+// solium-disable-next-line max-len
 import "openzeppelin-solidity/contracts/crowdsale/distribution/FinalizableCrowdsale.sol";
 
 import "./../token/FriendsFingersToken.sol";
@@ -11,6 +14,7 @@ import "./../token/FriendsFingersToken.sol";
 /**
  * @title FriendsFingersCrowdsale
  */
+// solium-disable-next-line max-len
 contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, MintedCrowdsale, Pausable, SafeContract {
 
   enum State { Active, Refunding, Closed, Blocked, Expired }
@@ -56,26 +60,49 @@ contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Minte
     uint256 _previousRoundId,
     uint256 _friendsFingersRatePerMille,
     address _friendsFingersWallet
-  ) public
-  CappedCrowdsale (_cap)
-  TimedCrowdsale (_openingTime, _closingTime)
-  FinalizableCrowdsale ()
-  Crowdsale (_rate, _wallet, _token)
+  )
+    public
+    CappedCrowdsale (_cap)
+    TimedCrowdsale (_openingTime, _closingTime)
+    FinalizableCrowdsale ()
+    Crowdsale (_rate, _wallet, _token)
   {
-    require(_closingTime <= _openingTime + 30 days, "Crowdale must end in 30 days");
+    require(
+      _closingTime <= _openingTime + 30 days,
+      "Crowdale must end in 30 days"
+    );
 
-    require(_round <= 5, "Can't restart more than 5 times");
+    require(
+      _round <= 5,
+      "Can't restart more than 5 times"
+    );
+
     if (_round == 1) {
       if (_id == 1) {
-        require(_goal >= 0, "Goal must be greater or equal to zero");
+        require(
+          _goal >= 0,
+          "Goal must be greater or equal to zero"
+        );
       } else {
-        require(_goal > 0, "Goal must be greater than zero");
+        require(
+          _goal > 0,
+          "Goal must be greater than zero"
+        );
       }
     } else {
-      require(_goal == 0, "Goal must be equal to zero");
+      require(
+        _goal == 0,
+        "Goal must be equal to zero"
+      );
     }
-    require(_cap > 0, "Cap must be greater than zero");
-    require(_cap >= _goal, "Cap must be greater than goal");
+    require(
+      _cap > 0,
+      "Cap must be greater than zero"
+    );
+    require(
+      _cap >= _goal,
+      "Cap must be greater than goal"
+    );
 
     goal = _goal;
 
@@ -122,7 +149,10 @@ contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Minte
 
   // if crowdsale is unsuccessful or blocked, investors can claim refunds here
   function claimRefund() public whenNotPaused {
-    require(state == State.Refunding || state == State.Blocked, "State must be Refunding or Blocked");
+    require(
+      state == State.Refunding || state == State.Blocked,
+      "State must be Refunding or Blocked"
+    );
     address investor = msg.sender;
 
     uint256 depositedValue = deposited[investor];
@@ -165,14 +195,33 @@ contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Minte
     nextRoundId = _nextRoundId;
   }
 
-  function setFriendsFingersRate(uint256 _newFriendsFingersRatePerMille) public onlyOwner {
-    require(_newFriendsFingersRatePerMille >= 0, "Can't set a value less than zero");
-    require(_newFriendsFingersRatePerMille <= friendsFingersRatePerMille, "Can't set a value greater than the previous");
+  function setFriendsFingersRate(
+    uint256 _newFriendsFingersRatePerMille
+  )
+    public
+    onlyOwner
+  {
+    require(
+      _newFriendsFingersRatePerMille >= 0,
+      "Can't set a value less than zero"
+    );
+    require(
+      _newFriendsFingersRatePerMille <= friendsFingersRatePerMille,
+      "Can't set a value greater than the previous"
+    );
     friendsFingersRatePerMille = _newFriendsFingersRatePerMille;
   }
 
-  function setFriendsFingersWallet(address _friendsFingersWallet) public onlyOwner {
-    require(_friendsFingersWallet != address(0), "Can't be set to the zero wallet");
+  function setFriendsFingersWallet(
+    address _friendsFingersWallet
+  )
+    public
+    onlyOwner
+  {
+    require(
+      _friendsFingersWallet != address(0),
+      "Can't be set to the zero wallet"
+    );
     friendsFingersWallet = _friendsFingersWallet;
   }
 
@@ -180,14 +229,23 @@ contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Minte
 
   function safeWithdrawal() public onlyOwner {
     // solium-disable-next-line security/no-block-members
-    require(block.timestamp >= closingTime + 365 days, "Can't safe withdraw before than a year after the end");
+    require(
+      block.timestamp >= closingTime + 365 days, // solium-disable-line security/no-block-members
+      "Can't safe withdraw before than a year after the end"
+    );
     friendsFingersWallet.transfer(address(this).balance);
   }
 
   function setExpiredAndWithdraw() public onlyOwner {
     // solium-disable-next-line security/no-block-members
-    require(block.timestamp >= closingTime + 365 days, "Can't withdraw before than a year after the end");
-    require(state == State.Refunding || state == State.Blocked, "Can't withdraw when Refunding or Blocked");
+    require(
+      block.timestamp >= closingTime + 365 days, // solium-disable-line security/no-block-members
+      "Can't withdraw before than a year after the end"
+    );
+    require(
+      state == State.Refunding || state == State.Blocked,
+      "Can't withdraw when Refunding or Blocked"
+    );
     state = State.Expired;
     friendsFingersWallet.transfer(address(this).balance);
     emit Expired();
@@ -197,7 +255,12 @@ contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Minte
 
   // overriding CappedCrowdsale#_preValidatePurchase to add extra cap logic
   // @return true if investors can buy at the moment
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
     require(state == State.Active, "State must be Active");
     super._preValidatePurchase(_beneficiary, _weiAmount);
   }

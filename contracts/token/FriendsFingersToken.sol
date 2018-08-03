@@ -10,6 +10,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 /**
  * @title FriendsFingersToken
  */
+// solium-disable-next-line max-len
 contract FriendsFingersToken is DetailedERC20, MintableToken, BurnableToken, SafeContract {
 
   address public builder;
@@ -24,21 +25,43 @@ contract FriendsFingersToken is DetailedERC20, MintableToken, BurnableToken, Saf
     string _symbol,
     uint8 _decimals
   )
-  public
-  DetailedERC20 (_name, _symbol, _decimals)
+    public
+    DetailedERC20 (_name, _symbol, _decimals)
   {
     builder = owner;
   }
 
-  function transfer(address _to, uint _value) public canTransfer returns (bool) {
+  function transfer(
+    address _to,
+    uint _value
+  )
+    public
+    canTransfer
+    returns (bool)
+  {
     return super.transfer(_to, _value);
   }
 
-  function transferFrom(address _from, address _to, uint _value) public canTransfer returns (bool) {
+  function transferFrom(
+    address _from,
+    address _to,
+    uint _value
+  )
+    public
+    canTransfer
+    returns (bool)
+  {
     return super.transferFrom(_from, _to, _value);
   }
 
-  function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success) {
+  function approveAndCall(
+    address _spender,
+    uint256 _amount,
+    bytes _extraData
+  )
+    public
+    returns (bool success)
+  {
     require(approve(_spender, _amount), "Spender must be approved");
 
     ContractReceiverInterface(_spender).receiveApproval(

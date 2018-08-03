@@ -13,7 +13,9 @@ contract ContractReceiverImpl {
     address from,
     uint256 _amount,
     address _token,
-    bytes _data) public
+    bytes _data
+  )
+    public
   {
     StandardToken token = StandardToken(_token);
     token.transferFrom(from, this, _amount);

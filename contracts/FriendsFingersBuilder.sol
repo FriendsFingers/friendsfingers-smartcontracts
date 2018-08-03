@@ -31,9 +31,9 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
     _;
   }
 
-  modifier onlyOwnerOrCreator(address _ffCrowdsale) {
+  modifier onlyOwnerOrCreator(address _ffc) {
     require(
-      msg.sender == crowdsaleCreators[_ffCrowdsale] || msg.sender == owner,
+      msg.sender == crowdsaleCreators[_ffc] || msg.sender == owner,
       "Sender must be owner or crowdsale creator"
     );
     _;
@@ -65,7 +65,10 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
     uint256 _rate,
     address _wallet,
     string _crowdsaleInfo
-  ) public whenNotPaused returns (FriendsFingersCrowdsale)
+  )
+    public
+    whenNotPaused
+    returns (FriendsFingersCrowdsale)
   {
     crowdsaleCount++;
     uint256 _round = 1;
@@ -80,7 +83,7 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
       token.mint(_wallet, _creatorSupply);
     }
 
-    FriendsFingersCrowdsale ffCrowdsale = new FriendsFingersCrowdsale(
+    FriendsFingersCrowdsale ffc = new FriendsFingersCrowdsale(
       crowdsaleCount,
       _cap,
       _goal,
@@ -97,146 +100,214 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
     );
 
     if (crowdsaleCount > 1) {
-      ffCrowdsale.pause();
+      ffc.pause();
     }
 
-    token.transferOwnership(address(ffCrowdsale));
+    token.transferOwnership(address(ffc));
 
-    addCrowdsaleToList(address(ffCrowdsale));
+    addCrowdsaleToList(address(ffc));
 
-    return ffCrowdsale;
+    return ffc;
   }
 
   function restartCrowdsale(
-    address _ffCrowdsale,
+    address _ffc,
     uint256 _cap,
     uint256 _openingTime,
     uint256 _closingTime,
     uint256 _rate,
     string _crowdsaleInfo
-  ) public whenNotPaused onlyOwnerOrCreator(_ffCrowdsale) returns (FriendsFingersCrowdsale)
+  )
+    public
+    whenNotPaused
+    onlyOwnerOrCreator(_ffc)
+    returns (FriendsFingersCrowdsale)
   {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    require(ffCrowdsale.nextRoundId() == 0, "Can't restart twice");
-    require(ffCrowdsale.goalReached(), "Can't restart if goal not reached");
-    require(_rate < ffCrowdsale.rate(), "Can't restart if rate greater or equal old rate");
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    require(
+      ffc.nextRoundId() == 0,
+      "Can't restart twice"
+    );
+    require(
+      ffc.goalReached(),
+      "Can't restart if goal not reached"
+    );
+    require(
+      _rate < ffc.rate(),
+      "Can't restart if rate greater or equal old rate"
+    );
 
-    ffCrowdsale.finalize();
+    ffc.finalize();
 
     crowdsaleCount++;
-    uint256 _round = ffCrowdsale.round();
+    uint256 _round = ffc.round();
     _round++;
 
-    FriendsFingersToken token = ffCrowdsale.token();
+    FriendsFingersToken token = ffc.token();
 
-    FriendsFingersCrowdsale newFriendsFingersCrowdsale = new FriendsFingersCrowdsale(
+    FriendsFingersCrowdsale newFfc = new FriendsFingersCrowdsale(
       crowdsaleCount,
       _cap,
       0,
       _openingTime,
       _closingTime,
       _rate,
-      ffCrowdsale.wallet(),
+      ffc.wallet(),
       token,
       _crowdsaleInfo,
       _round,
-      ffCrowdsale.id(),
+      ffc.id(),
       friendsFingersRatePerMille,
       friendsFingersWallet
     );
 
-    token.transferOwnership(address(newFriendsFingersCrowdsale));
+    token.transferOwnership(address(newFfc));
 
-    ffCrowdsale.setnextRoundId(crowdsaleCount);
+    ffc.setnextRoundId(crowdsaleCount);
 
-    addCrowdsaleToList(address(newFriendsFingersCrowdsale));
+    addCrowdsaleToList(address(newFfc));
 
-    return newFriendsFingersCrowdsale;
+    return newFfc;
   }
 
-  function closeCrowdsale(address _ffCrowdsale) public onlyOwnerOrCreator(_ffCrowdsale) {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    ffCrowdsale.finalize();
+  function closeCrowdsale(address _ffc) public onlyOwnerOrCreator(_ffc) {
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    ffc.finalize();
 
-    FriendsFingersToken token = ffCrowdsale.token();
+    FriendsFingersToken token = ffc.token();
     token.finishMinting();
-    token.transferOwnership(crowdsaleCreators[_ffCrowdsale]);
+    token.transferOwnership(crowdsaleCreators[_ffc]);
 
-    emit CrowdsaleClosed(ffCrowdsale);
+    emit CrowdsaleClosed(ffc);
   }
 
-  function updateCrowdsaleInfo(address _ffCrowdsale, string _crowdsaleInfo) public onlyOwnerOrCreator(_ffCrowdsale) {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    ffCrowdsale.updateCrowdsaleInfo(_crowdsaleInfo);
+  function updateCrowdsaleInfo(
+    address _ffc,
+    string _crowdsaleInfo
+  )
+    public
+    onlyOwnerOrCreator(_ffc)
+  {
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    ffc.updateCrowdsaleInfo(_crowdsaleInfo);
   }
 
   // Only builder owner methods
 
-  function changeEnabledAddressStatus(address _address, bool _status) public onlyOwner {
+  function changeEnabledAddressStatus(
+    address _address,
+    bool _status
+  )
+    public
+    onlyOwner
+  {
     require(_address != address(0), "Can't enable the zero wallet");
     enabledAddresses[_address] = _status;
   }
 
-  function setDefaultFriendsFingersRate(uint256 _newFriendsFingersRatePerMille) public onlyOwner {
-    require(_newFriendsFingersRatePerMille > 0, "Can't set a value less or equal to zero");
-    require(_newFriendsFingersRatePerMille < friendsFingersRatePerMille, "Can't set a value greater than the previous");
+  function setDefaultFriendsFingersRate(
+    uint256 _newFriendsFingersRatePerMille
+  )
+    public
+    onlyOwner
+  {
+    require(
+      _newFriendsFingersRatePerMille > 0,
+      "Can't set a value less or equal to zero"
+    );
+    require(
+      _newFriendsFingersRatePerMille < friendsFingersRatePerMille,
+      "Can't set a value greater than the previous"
+    );
     friendsFingersRatePerMille = _newFriendsFingersRatePerMille;
   }
 
   function setMainWallet(address _newFriendsFingersWallet) public onlyOwner {
-    require(_newFriendsFingersWallet != address(0), "Can't be set to the zero wallet");
+    require(
+      _newFriendsFingersWallet != address(0),
+      "Can't be set to the zero wallet"
+    );
     friendsFingersWallet = _newFriendsFingersWallet;
   }
 
-  function setFriendsFingersRateForCrowdsale(address _ffCrowdsale, uint256 _newFriendsFingersRatePerMille) public onlyOwner {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    ffCrowdsale.setFriendsFingersRate(_newFriendsFingersRatePerMille);
+  function setFriendsFingersRateForCrowdsale(
+    address _ffc,
+    uint256 _newFriendsFingersRatePerMille
+  )
+    public
+    onlyOwner
+  {
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    ffc.setFriendsFingersRate(_newFriendsFingersRatePerMille);
   }
 
-  function setFriendsFingersWalletForCrowdsale(address _ffCrowdsale, address _newFriendsFingersWallet) public onlyOwner {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    ffCrowdsale.setFriendsFingersWallet(_newFriendsFingersWallet);
+  function setFriendsFingersWalletForCrowdsale(
+    address _ffc,
+    address _newFriendsFingersWallet
+  )
+    public
+    onlyOwner
+  {
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    ffc.setFriendsFingersWallet(_newFriendsFingersWallet);
   }
 
   // Emergency methods (only builder owner or enabled addresses)
 
-  function pauseCrowdsale(address _ffCrowdsale) public onlyOwnerOrEnabledAddress {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    ffCrowdsale.pause();
+  function pauseCrowdsale(address _ffc) public onlyOwnerOrEnabledAddress {
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    ffc.pause();
   }
 
-  function unpauseCrowdsale(address _ffCrowdsale) public onlyOwnerOrEnabledAddress {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    ffCrowdsale.unpause();
+  function unpauseCrowdsale(address _ffc) public onlyOwnerOrEnabledAddress {
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    ffc.unpause();
   }
 
-  function blockCrowdsale(address _ffCrowdsale) public onlyOwnerOrEnabledAddress {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    ffCrowdsale.blockCrowdsale();
+  function blockCrowdsale(address _ffc) public onlyOwnerOrEnabledAddress {
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    ffc.blockCrowdsale();
   }
 
-  function safeTokenWithdrawalFromCrowdsale(address _ffCrowdsale, address _tokenAddress, uint256 _tokens) public onlyOwnerOrEnabledAddress {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    ffCrowdsale.transferAnyERC20Token(_tokenAddress, _tokens, friendsFingersWallet);
+  function safeTokenWithdrawalFromCrowdsale(
+    address _ffc,
+    address _tokenAddress,
+    uint256 _tokens
+  )
+    public
+    onlyOwnerOrEnabledAddress
+  {
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    ffc.transferAnyERC20Token(_tokenAddress, _tokens, friendsFingersWallet);
   }
 
-  function safeWithdrawalFromCrowdsale(address _ffCrowdsale) public onlyOwnerOrEnabledAddress {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    ffCrowdsale.safeWithdrawal();
+  function safeWithdrawalFromCrowdsale(
+    address _ffc
+  )
+    public
+    onlyOwnerOrEnabledAddress
+  {
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    ffc.safeWithdrawal();
   }
 
-  function setExpiredAndWithdraw(address _ffCrowdsale) public onlyOwnerOrEnabledAddress {
-    FriendsFingersCrowdsale ffCrowdsale = FriendsFingersCrowdsale(_ffCrowdsale);
-    ffCrowdsale.setExpiredAndWithdraw();
+  function setExpiredAndWithdraw(
+    address _ffc
+  )
+    public
+    onlyOwnerOrEnabledAddress
+  {
+    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
+    ffc.setExpiredAndWithdraw();
   }
 
   // Internal methods
 
-  function addCrowdsaleToList(address ffCrowdsale) internal {
-    crowdsaleList[crowdsaleCount] = ffCrowdsale;
-    crowdsaleCreators[ffCrowdsale] = msg.sender;
+  function addCrowdsaleToList(address _ffc) internal {
+    crowdsaleList[crowdsaleCount] = _ffc;
+    crowdsaleCreators[_ffc] = msg.sender;
 
-    emit CrowdsaleStarted(ffCrowdsale);
+    emit CrowdsaleStarted(ffc);
   }
 
 }

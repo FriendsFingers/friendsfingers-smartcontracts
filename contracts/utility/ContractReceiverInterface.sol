@@ -6,5 +6,7 @@ contract ContractReceiverInterface {
     address from,
     uint256 _amount,
     address _token,
-    bytes _data) public;
+    bytes _data
+  )
+    public;
 }
