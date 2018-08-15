@@ -1,8 +1,8 @@
-import ether from './helpers/ether';
-import { advanceBlock } from './helpers/advanceToBlock';
-import { increaseTimeTo, duration } from './helpers/increaseTime';
-import latestTime from './helpers/latestTime';
-import EVMRevert from './helpers/EVMRevert';
+const { ether } = require('./helpers/ether');
+const { advanceBlock } = require('./helpers/advanceToBlock');
+const { increaseTimeTo, duration } = require('./helpers/increaseTime');
+const { latestTime } = require('./helpers/latestTime');
+const { assertRevert } = require('./helpers/assertRevert');
 
 const BigNumber = web3.BigNumber;
 
@@ -32,7 +32,7 @@ contract('FriendsFingersBuilder', function (
 
     this.friendsFingersRatePerMille = 50;
 
-    this.openingTime = latestTime() + duration.weeks(1);
+    this.openingTime = (await latestTime()) + duration.weeks(1);
     this.closingTime = this.openingTime + duration.weeks(1);
     this.afterClosingTime = this.closingTime + duration.seconds(1);
 
@@ -42,7 +42,7 @@ contract('FriendsFingersBuilder', function (
     this.goal = ether(2);
     this.lessThanGoal = ether(1);
 
-    this.rate = new BigNumber(1000);
+    this.rate = new web3.BigNumber(1000);
 
     this.creatorSupply = new web3.BigNumber(10000 * Math.pow(10, this.decimals));
 
@@ -58,7 +58,7 @@ contract('FriendsFingersBuilder', function (
 
   describe('creating a valid builder', function () {
     it('should fail with 0x0 wallet address', async function () {
-      await FriendsFingersBuilder.new(0x0).should.be.rejectedWith(EVMRevert);
+      await assertRevert(FriendsFingersBuilder.new(0x0));
     });
 
     it('should success with valid wallet address', async function () {
@@ -93,7 +93,7 @@ contract('FriendsFingersBuilder', function (
     });
 
     it('first crowdsale should start as unpaused', async function () {
-      let paused = await this.crowdsale.paused();
+      const paused = await this.crowdsale.paused();
       assert.equal(paused, false);
     });
 
@@ -116,7 +116,7 @@ contract('FriendsFingersBuilder', function (
       const crowdsaleCount = await this.builder.crowdsaleCount();
       this.laterCrowdsale = FriendsFingersCrowdsale.at(await this.builder.crowdsaleList(crowdsaleCount));
 
-      let paused = await this.laterCrowdsale.paused();
+      const paused = await this.laterCrowdsale.paused();
       assert.equal(paused, true);
     });
 
@@ -155,7 +155,7 @@ contract('FriendsFingersBuilder', function (
   describe('restart crowdsale', function () {
     describe('goal reached', function () {
       beforeEach(async function () {
-        this.openingTime = latestTime() + duration.weeks(1);
+        this.openingTime = (await latestTime()) + duration.weeks(1);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.afterOpeningTime = this.openingTime + duration.seconds(1);
         this.afterClosingTime = this.closingTime + duration.seconds(1);
@@ -184,32 +184,36 @@ contract('FriendsFingersBuilder', function (
       });
 
       it('should fail with rate equal or greater than old rate', async function () {
-        this.openingTime = latestTime() + duration.weeks(3);
+        this.openingTime = (await latestTime()) + duration.weeks(3);
         this.closingTime = this.openingTime + duration.weeks(1);
-        await this.builder.restartCrowdsale(
-          this.crowdsale.address,
-          this.cap,
-          this.openingTime,
-          this.closingTime,
-          this.rate,
-          this.crowdsaleInfo,
-          { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.restartCrowdsale(
+            this.crowdsale.address,
+            this.cap,
+            this.openingTime,
+            this.closingTime,
+            this.rate,
+            this.crowdsaleInfo,
+            { from: creator }
+          )
+        );
 
         this.rate = this.rate + 1;
-        await this.builder.restartCrowdsale(
-          this.crowdsale.address,
-          this.cap,
-          this.openingTime,
-          this.closingTime,
-          this.rate,
-          this.crowdsaleInfo,
-          { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.restartCrowdsale(
+            this.crowdsale.address,
+            this.cap,
+            this.openingTime,
+            this.closingTime,
+            this.rate,
+            this.crowdsaleInfo,
+            { from: creator }
+          )
+        );
       });
 
       it('builder owner should success to restart crowdsale', async function () {
-        this.openingTime = latestTime() + duration.weeks(3);
+        this.openingTime = (await latestTime()) + duration.weeks(3);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.rate = this.rate - 1;
         await this.builder.restartCrowdsale(
@@ -224,7 +228,7 @@ contract('FriendsFingersBuilder', function (
       });
 
       it('crowdsale creator should success to restart crowdsale', async function () {
-        this.openingTime = latestTime() + duration.weeks(3);
+        this.openingTime = (await latestTime()) + duration.weeks(3);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.rate = this.rate - 1;
         await this.builder.restartCrowdsale(
@@ -239,22 +243,24 @@ contract('FriendsFingersBuilder', function (
       });
 
       it('any other user should fail to restart crowdsale', async function () {
-        this.openingTime = latestTime() + duration.weeks(3);
+        this.openingTime = (await latestTime()) + duration.weeks(3);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.rate = this.rate - 1;
-        await this.builder.restartCrowdsale(
-          this.crowdsale.address,
-          this.cap,
-          this.openingTime,
-          this.closingTime,
-          this.rate,
-          this.crowdsaleInfo,
-          { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.restartCrowdsale(
+            this.crowdsale.address,
+            this.cap,
+            this.openingTime,
+            this.closingTime,
+            this.rate,
+            this.crowdsaleInfo,
+            { from: thirdparty }
+          )
+        );
       });
 
       it('cannot be restarted and then closed', async function () {
-        this.openingTime = latestTime() + duration.weeks(3);
+        this.openingTime = (await latestTime()) + duration.weeks(3);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.rate = this.rate - 1;
         await this.builder.restartCrowdsale(
@@ -267,28 +273,32 @@ contract('FriendsFingersBuilder', function (
           { from: creator }
         ).should.be.fulfilled;
 
-        await this.builder.closeCrowdsale(this.crowdsale.address, { from: creator }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.closeCrowdsale(this.crowdsale.address, { from: creator })
+        );
       });
 
       it('cannot be closed and then restarted', async function () {
         await this.builder.closeCrowdsale(this.crowdsale.address, { from: creator }).should.be.fulfilled;
 
-        this.openingTime = latestTime() + duration.weeks(3);
+        this.openingTime = (await latestTime()) + duration.weeks(3);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.rate = this.rate - 1;
-        await this.builder.restartCrowdsale(
-          this.crowdsale.address,
-          this.cap,
-          this.openingTime,
-          this.closingTime,
-          this.rate,
-          this.crowdsaleInfo,
-          { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.restartCrowdsale(
+            this.crowdsale.address,
+            this.cap,
+            this.openingTime,
+            this.closingTime,
+            this.rate,
+            this.crowdsaleInfo,
+            { from: creator }
+          )
+        );
       });
 
       it('cannot be restarted twice', async function () {
-        this.openingTime = latestTime() + duration.weeks(3);
+        this.openingTime = (await latestTime()) + duration.weeks(3);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.rate = this.rate - 1;
         await this.builder.restartCrowdsale(
@@ -301,23 +311,25 @@ contract('FriendsFingersBuilder', function (
           { from: creator }
         ).should.be.fulfilled;
 
-        this.openingTime = latestTime() + duration.weeks(3);
+        this.openingTime = (await latestTime()) + duration.weeks(3);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.rate = this.rate - 1;
-        await this.builder.restartCrowdsale(
-          this.crowdsale.address,
-          this.cap,
-          this.openingTime,
-          this.closingTime,
-          this.rate,
-          this.crowdsaleInfo,
-          { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.restartCrowdsale(
+            this.crowdsale.address,
+            this.cap,
+            this.openingTime,
+            this.closingTime,
+            this.rate,
+            this.crowdsaleInfo,
+            { from: creator }
+          )
+        );
       });
 
       it('cannot be restarted more than 5 times', async function () {
         for (let i = 2; i <= 5; i++) {
-          this.openingTime = latestTime() + duration.weeks(3);
+          this.openingTime = (await latestTime()) + duration.weeks(3);
           this.closingTime = this.openingTime + duration.weeks(1);
           this.afterClosingTime = this.closingTime + duration.seconds(1);
           this.rate = this.rate - 1;
@@ -337,24 +349,26 @@ contract('FriendsFingersBuilder', function (
           await increaseTimeTo(this.afterClosingTime);
         }
 
-        this.openingTime = latestTime() + duration.weeks(3);
+        this.openingTime = (await latestTime()) + duration.weeks(3);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.afterClosingTime = this.closingTime + duration.seconds(1);
         this.rate = this.rate - 1;
-        await this.builder.restartCrowdsale(
-          this.crowdsale.address,
-          this.cap,
-          this.openingTime,
-          this.closingTime,
-          this.rate,
-          this.crowdsaleInfo,
-          { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.restartCrowdsale(
+            this.crowdsale.address,
+            this.cap,
+            this.openingTime,
+            this.closingTime,
+            this.rate,
+            this.crowdsaleInfo,
+            { from: creator }
+          )
+        );
       });
 
       describe('all values after restart should be right set', async function () {
         beforeEach(async function () {
-          this.openingTime = latestTime() + duration.weeks(3);
+          this.openingTime = (await latestTime()) + duration.weeks(3);
           this.closingTime = this.openingTime + duration.weeks(1);
           this.rate = this.rate - 1;
           const { logs } = await this.builder.restartCrowdsale(
@@ -410,7 +424,7 @@ contract('FriendsFingersBuilder', function (
 
     describe('goal not reached', function () {
       beforeEach(async function () {
-        this.openingTime = latestTime() + duration.weeks(1);
+        this.openingTime = (await latestTime()) + duration.weeks(1);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.afterClosingTime = this.closingTime + duration.seconds(1);
 
@@ -435,24 +449,26 @@ contract('FriendsFingersBuilder', function (
       });
 
       it('should fail to restart crowdsale', async function () {
-        this.openingTime = latestTime() + duration.weeks(3);
+        this.openingTime = (await latestTime()) + duration.weeks(3);
         this.closingTime = this.openingTime + duration.weeks(1);
         this.rate = this.rate - 1;
-        await this.builder.restartCrowdsale(
-          this.crowdsale.address,
-          this.cap,
-          this.openingTime,
-          this.closingTime,
-          this.rate,
-          this.crowdsaleInfo
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.restartCrowdsale(
+            this.crowdsale.address,
+            this.cap,
+            this.openingTime,
+            this.closingTime,
+            this.rate,
+            this.crowdsaleInfo
+          )
+        );
       });
     });
   });
 
   describe('close crowdsale', function () {
     beforeEach(async function () {
-      this.openingTime = latestTime() + duration.weeks(1);
+      this.openingTime = (await latestTime()) + duration.weeks(1);
       this.closingTime = this.openingTime + duration.weeks(1);
       this.afterClosingTime = this.closingTime + duration.seconds(1);
 
@@ -486,7 +502,9 @@ contract('FriendsFingersBuilder', function (
     });
 
     it('any other user should fail to close crowdsale', async function () {
-      await this.builder.closeCrowdsale(this.crowdsale.address, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        this.builder.closeCrowdsale(this.crowdsale.address, { from: thirdparty })
+      );
     });
 
     it('should close minting and transfer token ownership', async function () {
@@ -506,20 +524,22 @@ contract('FriendsFingersBuilder', function (
   describe('paused', function () {
     it('should fail to start crowdsale if paused and then success if unpaused', async function () {
       await this.builder.pause({ from: owner });
-      await this.builder.startCrowdsale(
-        this.name,
-        this.symbol,
-        this.decimals,
-        this.cap,
-        this.goal,
-        this.creatorSupply,
-        this.openingTime,
-        this.closingTime,
-        this.rate,
-        wallet,
-        this.crowdsaleInfo,
-        { from: creator }
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        this.builder.startCrowdsale(
+          this.name,
+          this.symbol,
+          this.decimals,
+          this.cap,
+          this.goal,
+          this.creatorSupply,
+          this.openingTime,
+          this.closingTime,
+          this.rate,
+          wallet,
+          this.crowdsaleInfo,
+          { from: creator }
+        )
+      );
 
       await this.builder.unpause({ from: owner });
       const { logs } = await this.builder.startCrowdsale(
@@ -542,7 +562,7 @@ contract('FriendsFingersBuilder', function (
     });
 
     it('should fail to restart crowdsale if paused and then success if unpaused', async function () {
-      this.openingTime = latestTime() + duration.weeks(1);
+      this.openingTime = (await latestTime()) + duration.weeks(1);
       this.closingTime = this.openingTime + duration.weeks(1);
       this.afterOpeningTime = this.openingTime + duration.seconds(1);
       this.afterClosingTime = this.closingTime + duration.seconds(1);
@@ -569,20 +589,22 @@ contract('FriendsFingersBuilder', function (
       await this.crowdsale.send(this.goal).should.be.fulfilled;
       await increaseTimeTo(this.afterClosingTime);
 
-      this.openingTime = latestTime() + duration.weeks(3);
+      this.openingTime = (await latestTime()) + duration.weeks(3);
       this.closingTime = this.openingTime + duration.weeks(1);
       this.rate = this.rate - 1;
 
       await this.builder.pause({ from: owner });
-      await this.builder.restartCrowdsale(
-        this.crowdsale.address,
-        this.cap,
-        this.openingTime,
-        this.closingTime,
-        this.rate,
-        this.crowdsaleInfo,
-        { from: creator }
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        this.builder.restartCrowdsale(
+          this.crowdsale.address,
+          this.cap,
+          this.openingTime,
+          this.closingTime,
+          this.rate,
+          this.crowdsaleInfo,
+          { from: creator }
+        )
+      );
 
       await this.builder.unpause({ from: owner });
       await this.builder.restartCrowdsale(
@@ -599,7 +621,7 @@ contract('FriendsFingersBuilder', function (
 
   describe('utilities for crowdsale', function () {
     beforeEach(async function () {
-      this.openingTime = latestTime() + duration.weeks(1);
+      this.openingTime = (await latestTime()) + duration.weeks(1);
       this.closingTime = this.openingTime + duration.weeks(1);
       this.afterClosingTime = this.closingTime + duration.seconds(1);
 
@@ -630,9 +652,11 @@ contract('FriendsFingersBuilder', function (
         await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
 
         await increaseTimeTo(this.closingTime + duration.years(1) - duration.days(1));
-        await this.builder.safeWithdrawalFromCrowdsale(
-          this.crowdsale.address, { from: owner }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.safeWithdrawalFromCrowdsale(
+            this.crowdsale.address, { from: owner }
+          )
+        );
       });
 
       it('enabled address should fail to safe withdraw before a year after the end time', async function () {
@@ -642,9 +666,11 @@ contract('FriendsFingersBuilder', function (
         await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
 
         await increaseTimeTo(this.closingTime + duration.years(1) - duration.days(1));
-        await this.builder.safeWithdrawalFromCrowdsale(
-          this.crowdsale.address, { from: auxWallet }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.safeWithdrawalFromCrowdsale(
+            this.crowdsale.address, { from: auxWallet }
+          )
+        );
       });
 
       it('builder owner should safe withdraw after a year', async function () {
@@ -691,12 +717,16 @@ contract('FriendsFingersBuilder', function (
 
         await increaseTimeTo(this.closingTime + duration.years(1));
 
-        await this.builder.safeWithdrawalFromCrowdsale(
-          this.crowdsale.address, { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
-        await this.builder.safeWithdrawalFromCrowdsale(
-          this.crowdsale.address, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.safeWithdrawalFromCrowdsale(
+            this.crowdsale.address, { from: creator }
+          )
+        );
+        await assertRevert(
+          this.builder.safeWithdrawalFromCrowdsale(
+            this.crowdsale.address, { from: thirdparty }
+          )
+        );
       });
     });
 
@@ -709,9 +739,11 @@ contract('FriendsFingersBuilder', function (
         await this.builder.closeCrowdsale(this.crowdsale.address, { from: creator });
 
         await increaseTimeTo(this.closingTime + duration.years(1));
-        await this.builder.setExpiredAndWithdraw(
-          this.crowdsale.address, { from: owner }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.setExpiredAndWithdraw(
+            this.crowdsale.address, { from: owner }
+          )
+        );
       });
 
       it('enabled address should fail to set expired and withdraw after a year if not refunding',
@@ -725,9 +757,11 @@ contract('FriendsFingersBuilder', function (
           await this.builder.closeCrowdsale(this.crowdsale.address, { from: creator });
 
           await increaseTimeTo(this.closingTime + duration.years(1));
-          await this.builder.setExpiredAndWithdraw(
-            this.crowdsale.address, { from: auxWallet }
-          ).should.be.rejectedWith(EVMRevert);
+          await assertRevert(
+            this.builder.setExpiredAndWithdraw(
+              this.crowdsale.address, { from: auxWallet }
+            )
+          );
         });
 
       it('builder owner should fail to set expired and withdraw before a year after the end time',
@@ -739,9 +773,11 @@ contract('FriendsFingersBuilder', function (
           await this.builder.closeCrowdsale(this.crowdsale.address, { from: creator });
 
           await increaseTimeTo(this.closingTime + duration.years(1) - 1);
-          await this.builder.setExpiredAndWithdraw(
-            this.crowdsale.address, { from: owner }
-          ).should.be.rejectedWith(EVMRevert);
+          await assertRevert(
+            this.builder.setExpiredAndWithdraw(
+              this.crowdsale.address, { from: owner }
+            )
+          );
         });
 
       it('enabled address should fail to set expired and withdraw before a year after the end time',
@@ -755,9 +791,11 @@ contract('FriendsFingersBuilder', function (
           await this.builder.closeCrowdsale(this.crowdsale.address, { from: creator });
 
           await increaseTimeTo(this.closingTime + duration.years(1) - 1);
-          await this.builder.setExpiredAndWithdraw(
-            this.crowdsale.address, { from: auxWallet }
-          ).should.be.rejectedWith(EVMRevert);
+          await assertRevert(
+            this.builder.setExpiredAndWithdraw(
+              this.crowdsale.address, { from: auxWallet }
+            )
+          );
         });
 
       it('builder owner should set expired and withdraw after a year if people have not claimed',
@@ -826,12 +864,16 @@ contract('FriendsFingersBuilder', function (
           contractPre.should.be.bignumber.equal(this.lessThanGoal);
 
           await increaseTimeTo(this.closingTime + duration.years(1));
-          await this.builder.setExpiredAndWithdraw(
-            this.crowdsale.address, { from: creator }
-          ).should.be.rejectedWith(EVMRevert);
-          await this.builder.setExpiredAndWithdraw(
-            this.crowdsale.address, { from: thirdparty }
-          ).should.be.rejectedWith(EVMRevert);
+          await assertRevert(
+            this.builder.setExpiredAndWithdraw(
+              this.crowdsale.address, { from: creator }
+            )
+          );
+          await assertRevert(
+            this.builder.setExpiredAndWithdraw(
+              this.crowdsale.address, { from: thirdparty }
+            )
+          );
         });
     });
 
@@ -856,20 +898,25 @@ contract('FriendsFingersBuilder', function (
       it('other users shouldn\'t block an active campaign', async function () {
         const preState = await this.crowdsale.state();
         preState.should.be.bignumber.equal(0); // Active
-        await this.builder.blockCrowdsale(
-          this.crowdsale.address, { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
-        await this.builder.blockCrowdsale(
-          this.crowdsale.address, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.blockCrowdsale(
+            this.crowdsale.address, { from: creator }
+          )
+        );
+        await assertRevert(
+          this.builder.blockCrowdsale(
+            this.crowdsale.address, { from: thirdparty }
+          )
+        );
       });
     });
 
     describe('change FriendsFingers wallet', function () {
       it('builder owner should fail to change FriendsFingers wallet if 0x0', async function () {
-        await this.builder.setFriendsFingersWalletForCrowdsale(
+        await assertRevert(this.builder.setFriendsFingersWalletForCrowdsale(
           this.crowdsale.address, 0x0, { from: owner }
-        ).should.be.rejectedWith(EVMRevert);
+        )
+        );
       });
 
       it('builder owner should change FriendsFingers wallet if valid address', async function () {
@@ -883,12 +930,16 @@ contract('FriendsFingersBuilder', function (
       });
 
       it('other users should\'t change FriendsFingers wallet if valid address', async function () {
-        await this.builder.setFriendsFingersWalletForCrowdsale(
-          this.crowdsale.address, auxWallet, { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
-        await this.builder.setFriendsFingersWalletForCrowdsale(
-          this.crowdsale.address, auxWallet, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.setFriendsFingersWalletForCrowdsale(
+            this.crowdsale.address, auxWallet, { from: creator }
+          )
+        );
+        await assertRevert(
+          this.builder.setFriendsFingersWalletForCrowdsale(
+            this.crowdsale.address, auxWallet, { from: thirdparty }
+          )
+        );
       });
     });
 
@@ -896,9 +947,11 @@ contract('FriendsFingersBuilder', function (
       it('builder owner should fail to change FriendsFingers fee if greater than previous', async function () {
         let friendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
         friendsFingersRatePerMille++;
-        await this.builder.setFriendsFingersRateForCrowdsale(
-          this.crowdsale.address, friendsFingersRatePerMille, { from: owner }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.setFriendsFingersRateForCrowdsale(
+            this.crowdsale.address, friendsFingersRatePerMille, { from: owner }
+          )
+        );
       });
 
       it('builder owner should change FriendsFingers fee if less than previous', async function () {
@@ -907,19 +960,23 @@ contract('FriendsFingersBuilder', function (
         await this.builder.setFriendsFingersRateForCrowdsale(
           this.crowdsale.address, friendsFingersRatePerMille, { from: owner }
         ).should.be.fulfilled;
-        let newFriendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
+        const newFriendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
         newFriendsFingersRatePerMille.should.be.bignumber.equal(friendsFingersRatePerMille);
       });
 
       it('other users should\'t change FriendsFingers fee if less than previous', async function () {
         let friendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
         friendsFingersRatePerMille--;
-        await this.builder.setFriendsFingersRateForCrowdsale(
-          this.crowdsale.address, friendsFingersRatePerMille, { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
-        await this.builder.setFriendsFingersRateForCrowdsale(
-          this.crowdsale.address, friendsFingersRatePerMille, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.setFriendsFingersRateForCrowdsale(
+            this.crowdsale.address, friendsFingersRatePerMille, { from: creator }
+          )
+        );
+        await assertRevert(
+          this.builder.setFriendsFingersRateForCrowdsale(
+            this.crowdsale.address, friendsFingersRatePerMille, { from: thirdparty }
+          )
+        );
       });
     });
 
@@ -928,29 +985,31 @@ contract('FriendsFingersBuilder', function (
         async function () {
           await increaseTimeTo(this.afterClosingTime);
 
-          let crowdsaleInfo = {
+          const crowdsaleInfo = {
             title: 'Test Crowdsale 2',
             description: 'Lorem ipsum 2', // description
             url: 'http://xxx2', // official url
             logo: 'http://yyy2', // official logo
           };
 
-          let jsonCrowdsaleInfo = JSON.stringify(crowdsaleInfo);
+          const jsonCrowdsaleInfo = JSON.stringify(crowdsaleInfo);
 
-          await this.builder.updateCrowdsaleInfo(
-            this.crowdsale.address, jsonCrowdsaleInfo, { from: creator }
-          ).should.be.rejectedWith(EVMRevert);
+          await assertRevert(
+            this.builder.updateCrowdsaleInfo(
+              this.crowdsale.address, jsonCrowdsaleInfo, { from: creator }
+            )
+          );
         });
 
       it('builder owner or crowdsale creator should update crowdsale info if not ended', async function () {
-        let crowdsaleInfo = {
+        const crowdsaleInfo = {
           title: 'Test Crowdsale 2',
           description: 'Lorem ipsum 2', // description
           url: 'http://xxx2', // official url
           logo: 'http://yyy2', // official logo
         };
 
-        let jsonCrowdsaleInfo = JSON.stringify(crowdsaleInfo);
+        const jsonCrowdsaleInfo = JSON.stringify(crowdsaleInfo);
 
         await this.builder.updateCrowdsaleInfo(this.crowdsale.address, jsonCrowdsaleInfo, { from: owner });
         let newCrowdsaleInfo = await this.crowdsale.crowdsaleInfo();
@@ -962,18 +1021,20 @@ contract('FriendsFingersBuilder', function (
       });
 
       it('other users should\'t update crowdsale info if not ended', async function () {
-        let crowdsaleInfo = {
+        const crowdsaleInfo = {
           title: 'Test Crowdsale 2',
           description: 'Lorem ipsum 2', // description
           url: 'http://xxx2', // official url
           logo: 'http://yyy2', // official logo
         };
 
-        let jsonCrowdsaleInfo = JSON.stringify(crowdsaleInfo);
+        const jsonCrowdsaleInfo = JSON.stringify(crowdsaleInfo);
 
-        await this.builder.updateCrowdsaleInfo(
-          this.crowdsale.address, jsonCrowdsaleInfo, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.updateCrowdsaleInfo(
+            this.crowdsale.address, jsonCrowdsaleInfo, { from: thirdparty }
+          )
+        );
       });
     });
 
@@ -998,12 +1059,16 @@ contract('FriendsFingersBuilder', function (
       it('other users creator can\'t pause a crowdsale', async function () {
         let paused = await this.crowdsale.paused();
         assert.equal(paused, false);
-        await this.builder.pauseCrowdsale(
-          this.crowdsale.address, { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
-        await this.builder.pauseCrowdsale(
-          this.crowdsale.address, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.pauseCrowdsale(
+            this.crowdsale.address, { from: creator }
+          )
+        );
+        await assertRevert(
+          this.builder.pauseCrowdsale(
+            this.crowdsale.address, { from: thirdparty }
+          )
+        );
         paused = await this.crowdsale.paused();
         assert.equal(paused, false);
       });
@@ -1039,12 +1104,16 @@ contract('FriendsFingersBuilder', function (
         await this.builder.pauseCrowdsale(this.crowdsale.address, { from: owner });
         paused = await this.crowdsale.paused();
         assert.equal(paused, true);
-        await this.builder.unpauseCrowdsale(
-          this.crowdsale.address, { from: creator }
-        ).should.be.rejectedWith(EVMRevert);
-        await this.builder.unpauseCrowdsale(
-          this.crowdsale.address, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.unpauseCrowdsale(
+            this.crowdsale.address, { from: creator }
+          )
+        );
+        await assertRevert(
+          this.builder.unpauseCrowdsale(
+            this.crowdsale.address, { from: thirdparty }
+          )
+        );
         paused = await this.crowdsale.paused();
         assert.equal(paused, true);
       });
@@ -1074,9 +1143,11 @@ contract('FriendsFingersBuilder', function (
         addressStatus = await this.builder.enabledAddresses(auxWallet);
         assert.equal(addressStatus, true);
 
-        await this.builder.changeEnabledAddressStatus(
-          auxWallet, false, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.changeEnabledAddressStatus(
+            auxWallet, false, { from: thirdparty }
+          )
+        );
         addressStatus = await this.builder.enabledAddresses(auxWallet);
         assert.equal(addressStatus, true);
       });
@@ -1085,9 +1156,11 @@ contract('FriendsFingersBuilder', function (
         let addressStatus = await this.builder.enabledAddresses(auxWallet);
         assert.equal(addressStatus, false);
 
-        await this.builder.changeEnabledAddressStatus(
-          auxWallet, true, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.changeEnabledAddressStatus(
+            auxWallet, true, { from: thirdparty }
+          )
+        );
         addressStatus = await this.builder.enabledAddresses(auxWallet);
         assert.equal(addressStatus, false);
       });
@@ -1098,9 +1171,11 @@ contract('FriendsFingersBuilder', function (
         async function () {
           let friendsFingersRatePerMille = await this.builder.friendsFingersRatePerMille();
           friendsFingersRatePerMille++;
-          await this.builder.setDefaultFriendsFingersRate(
-            friendsFingersRatePerMille, { from: owner }
-          ).should.be.rejectedWith(EVMRevert);
+          await assertRevert(
+            this.builder.setDefaultFriendsFingersRate(
+              friendsFingersRatePerMille, { from: owner }
+            )
+          );
         });
 
       it('builder owner should change FriendsFingers fee if less than previous', async function () {
@@ -1109,22 +1184,26 @@ contract('FriendsFingersBuilder', function (
         await this.builder.setDefaultFriendsFingersRate(
           friendsFingersRatePerMille, { from: owner }
         ).should.be.fulfilled;
-        let newFriendsFingersRatePerMille = await this.builder.friendsFingersRatePerMille();
+        const newFriendsFingersRatePerMille = await this.builder.friendsFingersRatePerMille();
         newFriendsFingersRatePerMille.should.be.bignumber.equal(friendsFingersRatePerMille);
       });
 
       it('other users should\'t change FriendsFingers fee if less than previous', async function () {
         let friendsFingersRatePerMille = await this.builder.friendsFingersRatePerMille();
         friendsFingersRatePerMille--;
-        await this.builder.setDefaultFriendsFingersRate(
-          friendsFingersRatePerMille, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.setDefaultFriendsFingersRate(
+            friendsFingersRatePerMille, { from: thirdparty }
+          )
+        );
       });
     });
 
     describe('change FriendsFingers main wallet', function () {
       it('builder owner should fail to change FriendsFingers wallet if 0x0', async function () {
-        await this.builder.setMainWallet(0x0, { from: owner }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.setMainWallet(0x0, { from: owner })
+        );
       });
 
       it('builder owner should change FriendsFingers wallet if valid address', async function () {
@@ -1136,7 +1215,9 @@ contract('FriendsFingersBuilder', function (
       });
 
       it('other users should\'t change FriendsFingers wallet if valid address', async function () {
-        await this.builder.setMainWallet(auxWallet, { from: thirdparty }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.builder.setMainWallet(auxWallet, { from: thirdparty })
+        );
       });
     });
   });
@@ -1173,7 +1254,7 @@ contract('FriendsFingersBuilder', function (
     it('owner or enabled address should safe transfer tokens from a crowdsale ' +
       'to builder wallet if sent into the contract',
     async function () {
-      this.openingTime = latestTime() + duration.weeks(1);
+      this.openingTime = (await latestTime()) + duration.weeks(1);
       this.closingTime = this.openingTime + duration.weeks(1);
       this.afterOpeningTime = this.openingTime + duration.seconds(1);
       this.afterClosingTime = this.closingTime + duration.seconds(1);

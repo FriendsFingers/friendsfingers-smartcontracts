@@ -1,8 +1,8 @@
-import ether from './helpers/ether';
-import { advanceBlock } from './helpers/advanceToBlock';
-import { increaseTimeTo, duration } from './helpers/increaseTime';
-import latestTime from './helpers/latestTime';
-import EVMRevert from './helpers/EVMRevert';
+const { ether } = require('./helpers/ether');
+const { advanceBlock } = require('./helpers/advanceToBlock');
+const { increaseTimeTo, duration } = require('./helpers/increaseTime');
+const { latestTime } = require('./helpers/latestTime');
+const { assertRevert } = require('./helpers/assertRevert');
 
 const BigNumber = web3.BigNumber;
 
@@ -34,7 +34,7 @@ contract('FriendsFingersCrowdsale', function (
     this.previousRound = 0;
     this.friendsFingersRatePerMille = 50;
 
-    this.openingTime = latestTime() + duration.weeks(1);
+    this.openingTime = (await latestTime()) + duration.weeks(1);
     this.closingTime = this.openingTime + duration.weeks(1);
     this.afterClosingTime = this.closingTime + duration.seconds(1);
 
@@ -44,7 +44,7 @@ contract('FriendsFingersCrowdsale', function (
     this.goal = ether(2);
     this.lessThanGoal = ether(1);
 
-    this.rate = new BigNumber(1000);
+    this.rate = new web3.BigNumber(1000);
     this.expectedTokenAmount = this.rate.mul(value);
 
     this.crowdsaleInfo = JSON.stringify({
@@ -83,147 +83,163 @@ contract('FriendsFingersCrowdsale', function (
     });
 
     it('should fail with start time in the past', async function () {
-      await FriendsFingersCrowdsale.new(
-        this.id,
-        this.cap,
-        this.goal,
-        latestTime() - duration.seconds(1),
-        this.closingTime,
-        this.rate,
-        wallet,
-        this.token.address,
-        this.crowdsaleInfo,
-        this.round,
-        this.previousRound,
-        this.friendsFingersRatePerMille,
-        friendsFingersWallet
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        FriendsFingersCrowdsale.new(
+          this.id,
+          this.cap,
+          this.goal,
+          (await latestTime()) - duration.seconds(1),
+          this.closingTime,
+          this.rate,
+          wallet,
+          this.token.address,
+          this.crowdsaleInfo,
+          this.round,
+          this.previousRound,
+          this.friendsFingersRatePerMille,
+          friendsFingersWallet
+        )
+      );
     });
 
     it('should fail with end time before start time', async function () {
-      await FriendsFingersCrowdsale.new(
-        this.id,
-        this.cap,
-        this.goal,
-        this.openingTime,
-        this.openingTime - duration.seconds(1),
-        this.rate,
-        wallet,
-        this.token.address,
-        this.crowdsaleInfo,
-        this.round,
-        this.previousRound,
-        this.friendsFingersRatePerMille,
-        friendsFingersWallet
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        FriendsFingersCrowdsale.new(
+          this.id,
+          this.cap,
+          this.goal,
+          this.openingTime,
+          this.openingTime - duration.seconds(1),
+          this.rate,
+          wallet,
+          this.token.address,
+          this.crowdsaleInfo,
+          this.round,
+          this.previousRound,
+          this.friendsFingersRatePerMille,
+          friendsFingersWallet
+        )
+      );
     });
 
     it('should fail with end time more than 30 days after start time', async function () {
-      await FriendsFingersCrowdsale.new(
-        this.id,
-        this.cap,
-        this.goal,
-        this.openingTime,
-        this.openingTime + duration.days(30) + 1,
-        this.rate,
-        wallet,
-        this.token.address,
-        this.crowdsaleInfo,
-        this.round,
-        this.previousRound,
-        this.friendsFingersRatePerMille,
-        friendsFingersWallet
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        FriendsFingersCrowdsale.new(
+          this.id,
+          this.cap,
+          this.goal,
+          this.openingTime,
+          this.openingTime + duration.days(30) + 1,
+          this.rate,
+          wallet,
+          this.token.address,
+          this.crowdsaleInfo,
+          this.round,
+          this.previousRound,
+          this.friendsFingersRatePerMille,
+          friendsFingersWallet
+        )
+      );
     });
 
     it('should fail with zero rate', async function () {
-      await FriendsFingersCrowdsale.new(
-        this.id,
-        this.cap,
-        this.goal,
-        this.openingTime,
-        this.closingTime,
-        0,
-        wallet,
-        this.token.address,
-        this.crowdsaleInfo,
-        this.round,
-        this.previousRound,
-        this.friendsFingersRatePerMille,
-        friendsFingersWallet
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        FriendsFingersCrowdsale.new(
+          this.id,
+          this.cap,
+          this.goal,
+          this.openingTime,
+          this.closingTime,
+          0,
+          wallet,
+          this.token.address,
+          this.crowdsaleInfo,
+          this.round,
+          this.previousRound,
+          this.friendsFingersRatePerMille,
+          friendsFingersWallet
+        )
+      );
     });
 
     it('should fail with 0x0 wallet', async function () {
-      await FriendsFingersCrowdsale.new(
-        this.id,
-        this.cap,
-        this.goal,
-        this.openingTime,
-        this.closingTime,
-        this.rate,
-        0x0,
-        this.token.address,
-        this.crowdsaleInfo,
-        this.round,
-        this.previousRound,
-        this.friendsFingersRatePerMille,
-        friendsFingersWallet
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        FriendsFingersCrowdsale.new(
+          this.id,
+          this.cap,
+          this.goal,
+          this.openingTime,
+          this.closingTime,
+          this.rate,
+          0x0,
+          this.token.address,
+          this.crowdsaleInfo,
+          this.round,
+          this.previousRound,
+          this.friendsFingersRatePerMille,
+          friendsFingersWallet
+        )
+      );
     });
 
     it('should fail with zero cap', async function () {
-      await FriendsFingersCrowdsale.new(
-        this.id,
-        0,
-        this.goal,
-        this.openingTime,
-        this.closingTime,
-        this.rate,
-        wallet,
-        this.token.address,
-        this.crowdsaleInfo,
-        this.round,
-        this.previousRound,
-        this.friendsFingersRatePerMille,
-        friendsFingersWallet
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        FriendsFingersCrowdsale.new(
+          this.id,
+          0,
+          this.goal,
+          this.openingTime,
+          this.closingTime,
+          this.rate,
+          wallet,
+          this.token.address,
+          this.crowdsaleInfo,
+          this.round,
+          this.previousRound,
+          this.friendsFingersRatePerMille,
+          friendsFingersWallet
+        )
+      );
     });
 
     it('should fail with zero goal', async function () {
-      await FriendsFingersCrowdsale.new(
-        this.id,
-        this.cap,
-        0,
-        this.openingTime,
-        this.closingTime,
-        this.rate,
-        wallet,
-        this.token.address,
-        this.crowdsaleInfo,
-        this.round,
-        this.previousRound,
-        this.friendsFingersRatePerMille,
-        friendsFingersWallet
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        FriendsFingersCrowdsale.new(
+          this.id,
+          this.cap,
+          0,
+          this.openingTime,
+          this.closingTime,
+          this.rate,
+          wallet,
+          this.token.address,
+          this.crowdsaleInfo,
+          this.round,
+          this.previousRound,
+          this.friendsFingersRatePerMille,
+          friendsFingersWallet
+        )
+      );
     });
 
     it('should fail with cap under goal', async function () {
-      await FriendsFingersCrowdsale.new(
-        this.id,
-        ether(2),
-        ether(3),
-        this.openingTime,
-        this.closingTime,
-        this.rate,
-        wallet,
-        this.token.address,
-        this.crowdsaleInfo,
-        this.round,
-        this.previousRound,
-        this.friendsFingersRatePerMille,
-        friendsFingersWallet
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        FriendsFingersCrowdsale.new(
+          this.id,
+          ether(2),
+          ether(3),
+          this.openingTime,
+          this.closingTime,
+          this.rate,
+          wallet,
+          this.token.address,
+          this.crowdsaleInfo,
+          this.round,
+          this.previousRound,
+          this.friendsFingersRatePerMille,
+          friendsFingersWallet
+        )
+      );
     });
 
     it('should success with zero goal if it is the first crowdsale started', async function () {
@@ -245,46 +261,50 @@ contract('FriendsFingersCrowdsale', function (
     });
 
     it('should fail with 0x0 token address', async function () {
-      await FriendsFingersCrowdsale.new(
-        this.id,
-        this.cap,
-        this.goal,
-        this.openingTime,
-        this.closingTime,
-        this.rate,
-        wallet,
-        0x0,
-        this.crowdsaleInfo,
-        this.round,
-        this.previousRound,
-        this.friendsFingersRatePerMille,
-        friendsFingersWallet
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        FriendsFingersCrowdsale.new(
+          this.id,
+          this.cap,
+          this.goal,
+          this.openingTime,
+          this.closingTime,
+          this.rate,
+          wallet,
+          0x0,
+          this.crowdsaleInfo,
+          this.round,
+          this.previousRound,
+          this.friendsFingersRatePerMille,
+          friendsFingersWallet
+        )
+      );
     });
 
     it('should fail with round greater than 5', async function () {
-      await FriendsFingersCrowdsale.new(
-        this.id,
-        this.cap,
-        this.goal,
-        this.openingTime,
-        this.closingTime,
-        this.rate,
-        wallet,
-        this.token.address,
-        this.crowdsaleInfo,
-        6,
-        this.previousRound,
-        this.friendsFingersRatePerMille,
-        friendsFingersWallet
-      ).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        FriendsFingersCrowdsale.new(
+          this.id,
+          this.cap,
+          this.goal,
+          this.openingTime,
+          this.closingTime,
+          this.rate,
+          wallet,
+          this.token.address,
+          this.crowdsaleInfo,
+          6,
+          this.previousRound,
+          this.friendsFingersRatePerMille,
+          friendsFingersWallet
+        )
+      );
     });
   });
 
   describe('accepting payments', function () {
     it('should reject payments before start', async function () {
-      await this.crowdsale.send(value).should.be.rejectedWith(EVMRevert);
-      await this.crowdsale.buyTokens(investor, { from: purchaser, value: value }).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.send(value));
+      await assertRevert(this.crowdsale.buyTokens(investor, { from: purchaser, value: value }));
     });
 
     it('should accept payments after start', async function () {
@@ -295,8 +315,8 @@ contract('FriendsFingersCrowdsale', function (
 
     it('should reject payments after end', async function () {
       await increaseTimeTo(this.afterClosingTime);
-      await this.crowdsale.send(value).should.be.rejectedWith(EVMRevert);
-      await this.crowdsale.buyTokens(investor, { value: value, from: purchaser }).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.send(value));
+      await assertRevert(this.crowdsale.buyTokens(investor, { value: value, from: purchaser }));
     });
 
     it('should accept payments within cap', async function () {
@@ -308,18 +328,18 @@ contract('FriendsFingersCrowdsale', function (
     it('should reject payments outside cap', async function () {
       await increaseTimeTo(this.openingTime);
       await this.crowdsale.send(this.cap);
-      await this.crowdsale.send(1).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.send(1));
     });
 
     it('should reject payments that exceed cap', async function () {
       await increaseTimeTo(this.openingTime);
-      await this.crowdsale.send(this.cap.plus(1)).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.send(this.cap.plus(1)));
     });
 
     it('should reject payments if campaign is blocked', async function () {
       await increaseTimeTo(this.openingTime);
       await this.crowdsale.blockCrowdsale({ from: owner });
-      await this.crowdsale.send(value).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.send(value));
     });
   });
 
@@ -348,7 +368,7 @@ contract('FriendsFingersCrowdsale', function (
 
     it('should assign tokens to sender', async function () {
       await this.crowdsale.sendTransaction({ value: value, from: investor });
-      let balance = await this.token.balanceOf(investor);
+      const balance = await this.token.balanceOf(investor);
       balance.should.be.bignumber.equal(this.expectedTokenAmount);
     });
 
@@ -412,18 +432,18 @@ contract('FriendsFingersCrowdsale', function (
 
     it('should not be ended if just under cap', async function () {
       await this.crowdsale.send(this.cap.minus(1));
-      let hasClosed = await this.crowdsale.hasClosed();
+      const hasClosed = await this.crowdsale.hasClosed();
       hasClosed.should.equal(false);
     });
 
     it('should be ended if cap reached', async function () {
       await this.crowdsale.send(this.cap);
-      let hasClosed = await this.crowdsale.hasClosed();
+      const hasClosed = await this.crowdsale.hasClosed();
       hasClosed.should.equal(true);
     });
 
     it('should not be ended before end', async function () {
-      let ended = await this.crowdsale.hasClosed();
+      const ended = await this.crowdsale.hasClosed();
       ended.should.equal(false);
     });
 
@@ -438,12 +458,12 @@ contract('FriendsFingersCrowdsale', function (
 
   describe('finalizing', function () {
     it('cannot be finalized before ending', async function () {
-      await this.crowdsale.finalize({ from: owner }).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.finalize({ from: owner }));
     });
 
     it('cannot be finalized by third party after ending', async function () {
       await increaseTimeTo(this.afterClosingTime);
-      await this.crowdsale.finalize({ from: thirdparty }).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.finalize({ from: thirdparty }));
     });
 
     it('can be finalized by owner after ending', async function () {
@@ -454,7 +474,7 @@ contract('FriendsFingersCrowdsale', function (
     it('cannot be finalized twice', async function () {
       await increaseTimeTo(this.afterClosingTime);
       await this.crowdsale.finalize({ from: owner });
-      await this.crowdsale.finalize({ from: owner }).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.finalize({ from: owner }));
     });
 
     it('logs finalized', async function () {
@@ -467,16 +487,16 @@ contract('FriendsFingersCrowdsale', function (
 
   describe('refunding', function () {
     it('should deny refunds before end', async function () {
-      await this.crowdsale.claimRefund({ from: investor }).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.claimRefund({ from: investor }));
       await increaseTimeTo(this.openingTime);
-      await this.crowdsale.claimRefund({ from: investor }).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.claimRefund({ from: investor }));
     });
 
     it('should deny refunds after end if goal was reached', async function () {
       await increaseTimeTo(this.openingTime);
       await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
       await increaseTimeTo(this.afterClosingTime);
-      await this.crowdsale.claimRefund({ from: investor }).should.be.rejectedWith(EVMRevert);
+      await assertRevert(this.crowdsale.claimRefund({ from: investor }));
     });
 
     it('should allow refunds after end if goal was not reached', async function () {
@@ -546,15 +566,17 @@ contract('FriendsFingersCrowdsale', function (
 
       it('should reject payments after start', async function () {
         await increaseTimeTo(this.openingTime);
-        await this.crowdsale.send(value).should.be.rejectedWith(EVMRevert);
-        await this.crowdsale.buyTokens(
-          investor, { value: value, from: purchaser }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.send(value));
+        await assertRevert(
+          this.crowdsale.buyTokens(
+            investor, { value: value, from: purchaser }
+          )
+        );
       });
 
       it('should reject payments within cap', async function () {
         await increaseTimeTo(this.openingTime);
-        await this.crowdsale.send(this.lessThanCap).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.send(this.lessThanCap));
       });
     });
 
@@ -568,7 +590,7 @@ contract('FriendsFingersCrowdsale', function (
 
         await this.crowdsale.pause({ from: owner });
 
-        await this.crowdsale.claimRefund({ from: investor, gasPrice: 0 }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.claimRefund({ from: investor, gasPrice: 0 }));
       });
     });
 
@@ -576,7 +598,7 @@ contract('FriendsFingersCrowdsale', function (
       it('cannot be finalized', async function () {
         await increaseTimeTo(this.afterClosingTime);
         await this.crowdsale.pause({ from: owner });
-        await this.crowdsale.finalize({ from: owner }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.finalize({ from: owner }));
       });
     });
   });
@@ -588,7 +610,7 @@ contract('FriendsFingersCrowdsale', function (
         await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
 
         await increaseTimeTo(this.closingTime + duration.years(1) - duration.days(1));
-        await this.crowdsale.safeWithdrawal({ from: owner }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.safeWithdrawal({ from: owner }));
       });
 
       it('owner should safe withdraw after a year', async function () {
@@ -614,7 +636,7 @@ contract('FriendsFingersCrowdsale', function (
         await this.crowdsale.sendTransaction({ value: this.goal, from: investor });
 
         await increaseTimeTo(this.closingTime + duration.years(1));
-        await this.crowdsale.safeWithdrawal({ from: thirdparty }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.safeWithdrawal({ from: thirdparty }));
       });
     });
 
@@ -627,7 +649,7 @@ contract('FriendsFingersCrowdsale', function (
         await this.crowdsale.finalize({ from: owner });
 
         await increaseTimeTo(this.closingTime + duration.years(1));
-        await this.crowdsale.setExpiredAndWithdraw({ from: owner }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.setExpiredAndWithdraw({ from: owner }));
       });
 
       it('owner should fail to set expired and withdraw before a year after the end time', async function () {
@@ -638,7 +660,7 @@ contract('FriendsFingersCrowdsale', function (
         await this.crowdsale.finalize({ from: owner });
 
         await increaseTimeTo(this.closingTime + duration.years(1) - 1);
-        await this.crowdsale.setExpiredAndWithdraw({ from: owner }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.setExpiredAndWithdraw({ from: owner }));
       });
 
       it('owner should set expired and withdraw after a year if people have not claimed', async function () {
@@ -678,7 +700,7 @@ contract('FriendsFingersCrowdsale', function (
           contractPre.should.be.bignumber.equal(this.lessThanGoal);
 
           await increaseTimeTo(this.closingTime + duration.years(1));
-          await this.crowdsale.setExpiredAndWithdraw({ from: thirdparty }).should.be.rejectedWith(EVMRevert);
+          await assertRevert(this.crowdsale.setExpiredAndWithdraw({ from: thirdparty }));
         });
     });
 
@@ -692,7 +714,7 @@ contract('FriendsFingersCrowdsale', function (
 
         const preState = await this.crowdsale.state();
         preState.should.be.bignumber.equal(2); // Closed
-        await this.crowdsale.blockCrowdsale({ from: owner }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.blockCrowdsale({ from: owner }));
       });
 
       it('owner should block an active campaign', async function () {
@@ -706,13 +728,13 @@ contract('FriendsFingersCrowdsale', function (
       it('third party shouldn\'t block an active campaign', async function () {
         const preState = await this.crowdsale.state();
         preState.should.be.bignumber.equal(0); // Active
-        await this.crowdsale.blockCrowdsale({ from: thirdparty }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.blockCrowdsale({ from: thirdparty }));
       });
     });
 
     describe('change FriendsFingers wallet', function () {
       it('owner should fail to change FriendsFingers wallet if 0x0', async function () {
-        await this.crowdsale.setFriendsFingersWallet(0x0, { from: owner }).should.be.rejectedWith(EVMRevert);
+        await assertRevert(this.crowdsale.setFriendsFingersWallet(0x0, { from: owner }));
       });
 
       it('owner should change FriendsFingers wallet if valid address', async function () {
@@ -724,9 +746,11 @@ contract('FriendsFingersCrowdsale', function (
       });
 
       it('third party shouldn\'t change FriendsFingers wallet if valid address', async function () {
-        await this.crowdsale.setFriendsFingersWallet(
-          auxWallet, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.crowdsale.setFriendsFingersWallet(
+            auxWallet, { from: thirdparty }
+          )
+        );
       });
     });
 
@@ -734,9 +758,11 @@ contract('FriendsFingersCrowdsale', function (
       it('owner should fail to change FriendsFingers fee if greater than previous', async function () {
         let friendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
         friendsFingersRatePerMille++;
-        await this.crowdsale.setFriendsFingersRate(
-          friendsFingersRatePerMille, { from: owner }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.crowdsale.setFriendsFingersRate(
+            friendsFingersRatePerMille, { from: owner }
+          )
+        );
       });
 
       it('owner should change FriendsFingers fee if less than previous', async function () {
@@ -745,16 +771,18 @@ contract('FriendsFingersCrowdsale', function (
         await this.crowdsale.setFriendsFingersRate(
           friendsFingersRatePerMille, { from: owner }
         ).should.be.fulfilled;
-        let newFriendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
+        const newFriendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
         newFriendsFingersRatePerMille.should.be.bignumber.equal(friendsFingersRatePerMille);
       });
 
       it('third party shouldn\'t change FriendsFingers fee if less than previous', async function () {
         let friendsFingersRatePerMille = await this.crowdsale.friendsFingersRatePerMille();
         friendsFingersRatePerMille--;
-        await this.crowdsale.setFriendsFingersRate(
-          friendsFingersRatePerMille, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.crowdsale.setFriendsFingersRate(
+            friendsFingersRatePerMille, { from: thirdparty }
+          )
+        );
       });
     });
 
@@ -762,20 +790,22 @@ contract('FriendsFingersCrowdsale', function (
       it('owner should fail to update crowdsale info if ended', async function () {
         await increaseTimeTo(this.afterClosingTime);
 
-        let jsonCrowdsaleInfo = JSON.stringify({
+        const jsonCrowdsaleInfo = JSON.stringify({
           title: 'Test Crowdsale 2',
           description: 'Lorem ipsum 2', // description
           url: 'http://xxx2', // official url
           logo: 'http://yyy2', // official logo
         });
 
-        await this.crowdsale.updateCrowdsaleInfo(
-          jsonCrowdsaleInfo, { from: owner }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.crowdsale.updateCrowdsaleInfo(
+            jsonCrowdsaleInfo, { from: owner }
+          )
+        );
       });
 
       it('owner should update crowdsale info if not ended', async function () {
-        let jsonCrowdsaleInfo = JSON.stringify({
+        const jsonCrowdsaleInfo = JSON.stringify({
           title: 'Test Crowdsale 2',
           description: 'Lorem ipsum 2', // description
           url: 'http://xxx2', // official url
@@ -784,22 +814,24 @@ contract('FriendsFingersCrowdsale', function (
 
         await this.crowdsale.updateCrowdsaleInfo(jsonCrowdsaleInfo, { from: owner });
 
-        let newCrowdsaleInfo = await this.crowdsale.crowdsaleInfo();
+        const newCrowdsaleInfo = await this.crowdsale.crowdsaleInfo();
 
         newCrowdsaleInfo.should.be.equal(jsonCrowdsaleInfo);
       });
 
       it('third party shouldn\'t update crowdsale info if not ended', async function () {
-        let jsonCrowdsaleInfo = JSON.stringify({
+        const jsonCrowdsaleInfo = JSON.stringify({
           title: 'Test Crowdsale 2',
           description: 'Lorem ipsum 2', // description
           url: 'http://xxx2', // official url
           logo: 'http://yyy2', // official logo
         });
 
-        await this.crowdsale.updateCrowdsaleInfo(
-          jsonCrowdsaleInfo, { from: thirdparty }
-        ).should.be.rejectedWith(EVMRevert);
+        await assertRevert(
+          this.crowdsale.updateCrowdsaleInfo(
+            jsonCrowdsaleInfo, { from: thirdparty }
+          )
+        );
       });
     });
   });

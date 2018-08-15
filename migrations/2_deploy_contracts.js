@@ -1,4 +1,4 @@
-let FriendsFingersBuilder = artifacts.require('./FriendsFingersBuilder.sol');
+const FriendsFingersBuilder = artifacts.require('./FriendsFingersBuilder.sol');
 
 module.exports = function (deployer, network, accounts) {
   const friendsFingersWallet = accounts[0];

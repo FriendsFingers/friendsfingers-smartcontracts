@@ -1,7 +1,5 @@
-import expectThrow from './helpers/expectThrow';
-import assertRevert from './helpers/assertRevert';
+const { assertRevert } = require('./helpers/assertRevert');
 
-const EVMRevert = require('./helpers/EVMRevert.js');
 const BigNumber = web3.BigNumber;
 
 require('chai')
@@ -15,7 +13,7 @@ const FriendsFingersToken = artifacts.require('FriendsFingersToken');
 const ContractReceiverImpl = artifacts.require('ContractReceiverImpl');
 
 contract('FriendsFingersToken', function (accounts) {
-  let obj = {
+  const obj = {
     name: 'Shaka',
     symbol: 'HAK',
     decimals: 18,
@@ -44,12 +42,12 @@ contract('FriendsFingersToken', function (accounts) {
     });
 
     it('should start with a totalSupply of 0', async function () {
-      let totalSupply = await token.totalSupply();
+      const totalSupply = await token.totalSupply();
       assert.equal(totalSupply, 0);
     });
 
     it('should return mintingFinished false after construction', async function () {
-      let mintingFinished = await token.mintingFinished();
+      const mintingFinished = await token.mintingFinished();
       assert.equal(mintingFinished, false);
     });
   });
@@ -69,23 +67,23 @@ contract('FriendsFingersToken', function (accounts) {
       assert.equal(result.logs[1].event, 'Transfer');
       assert.equal(result.logs[1].args.from.valueOf(), 0x0);
 
-      let balance0 = await token.balanceOf(accounts[0]);
+      const balance0 = await token.balanceOf(accounts[0]);
       assert(balance0, 100);
 
-      let totalSupply = await token.totalSupply();
+      const totalSupply = await token.totalSupply();
       assert(totalSupply, 100);
     });
 
     it('should fail to mint after call to finishMinting', async function () {
       await token.finishMinting();
       assert.equal(await token.mintingFinished(), true);
-      await expectThrow(token.mint(accounts[0], 100));
+      await assertRevert(token.mint(accounts[0], 100));
     });
   });
 
   describe('should work as a burnable token', function () {
     let token;
-    let expectedTokenSupply = new BigNumber(999);
+    const expectedTokenSupply = new web3.BigNumber(999);
 
     beforeEach(async function () {
       token = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
@@ -107,7 +105,9 @@ contract('FriendsFingersToken', function (accounts) {
     });
 
     it('cannot burn more tokens than your balance', async function () {
-      await token.burn(2000, { from: accounts[0] }).should.be.rejectedWith(EVMRevert);
+      await assertRevert(
+        token.burn(2000, { from: accounts[0] })
+      );
     });
   });
 
@@ -133,16 +133,16 @@ contract('FriendsFingersToken', function (accounts) {
 
       it('should return the correct allowance amount after approval', async function () {
         await token.approve(accounts[1], 100);
-        let allowance = await token.allowance(accounts[0], accounts[1]);
+        const allowance = await token.allowance(accounts[0], accounts[1]);
         assert.equal(allowance, 100);
       });
 
       it('should return correct balances after transfer', async function () {
         await token.transfer(accounts[1], 100);
-        let balance0 = await token.balanceOf(accounts[0]);
+        const balance0 = await token.balanceOf(accounts[0]);
         assert.equal(balance0, 0);
 
-        let balance1 = await token.balanceOf(accounts[1]);
+        const balance1 = await token.balanceOf(accounts[1]);
         assert.equal(balance1, 100);
       });
 
@@ -150,17 +150,17 @@ contract('FriendsFingersToken', function (accounts) {
         await assertRevert(token.transfer(accounts[1], 101));
       });
 
-      it('should return correct balances after transfering from another account', async function () {
+      it('should return correct balances after transferring from another account', async function () {
         await token.approve(accounts[1], 100);
         await token.transferFrom(accounts[0], accounts[2], 100, { from: accounts[1] });
 
-        let balance0 = await token.balanceOf(accounts[0]);
+        const balance0 = await token.balanceOf(accounts[0]);
         assert.equal(balance0, 0);
 
-        let balance1 = await token.balanceOf(accounts[2]);
+        const balance1 = await token.balanceOf(accounts[2]);
         assert.equal(balance1, 100);
 
-        let balance2 = await token.balanceOf(accounts[1]);
+        const balance2 = await token.balanceOf(accounts[1]);
         assert.equal(balance2, 0);
       });
 
@@ -170,7 +170,7 @@ contract('FriendsFingersToken', function (accounts) {
       });
 
       it('should throw an error when trying to transferFrom more than _from has', async function () {
-        let balance0 = await token.balanceOf(accounts[0]);
+        const balance0 = await token.balanceOf(accounts[0]);
         await token.approve(accounts[1], 99);
         await assertRevert(token.transferFrom(accounts[0], accounts[2], balance0 + 1, { from: accounts[1] }));
       });
@@ -185,10 +185,10 @@ contract('FriendsFingersToken', function (accounts) {
 
         it('should increase by 50 then decrease by 10', async function () {
           await token.increaseApproval(accounts[1], 50);
-          let postIncrease = await token.allowance(accounts[0], accounts[1]);
+          const postIncrease = await token.allowance(accounts[0], accounts[1]);
           preApproved.plus(50).should.be.bignumber.equal(postIncrease);
           await token.decreaseApproval(accounts[1], 10);
-          let postDecrease = await token.allowance(accounts[0], accounts[1]);
+          const postDecrease = await token.allowance(accounts[0], accounts[1]);
           postIncrease.minus(10).should.be.bignumber.equal(postDecrease);
         });
       });
@@ -196,7 +196,7 @@ contract('FriendsFingersToken', function (accounts) {
       it('should increase by 50 then set to 0 when decreasing by more than 50', async function () {
         await token.approve(accounts[1], 50);
         await token.decreaseApproval(accounts[1], 60);
-        let postDecrease = await token.allowance(accounts[0], accounts[1]);
+        const postDecrease = await token.allowance(accounts[0], accounts[1]);
         postDecrease.should.be.bignumber.equal(0);
       });
 
@@ -213,7 +213,7 @@ contract('FriendsFingersToken', function (accounts) {
 
   describe('should have additional functions working as expected', function () {
     it('should call receiveApproval on contract after approveAndCall', async function () {
-      let token = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
+      const token = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
 
       const auxContract = await ContractReceiverImpl.new();
 
@@ -237,7 +237,7 @@ contract('FriendsFingersToken', function (accounts) {
     });
 
     it('should fail to transfer ETH into the token contract', async function () {
-      let token = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
+      const token = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
       await assertRevert(token.send(web3.toWei('1', 'ether')));
     });
   });
