@@ -13,56 +13,71 @@ FriendsFingers helps startups and small businesses to start a trustworthy Crowds
  
 ## Installation
 
-Install Truffle and dependencies
+
+Install truffle.
 
 ```bash
-npm install -g truffle     // Version 4.0.6+ required.
-npm install -g solc        // Version 0.4.19+ required
+npm install -g truffle      // Version 4.1.13+ required.
+```
+
+
+
+## Install dependencies
+
+
+```bash
 npm install
 ```
+
+
+
+## Linter
+
+
+Use Solium
+
+```bash
+npm run lint:sol
+```
+
+Lint and fix all
+
+```bash
+npm run lint:all:fix
+```
+
+
+
+## Compile and test the contracts.
  
- 
- 
-## Start Truffle
+
+Open the Truffle console
 
 ```bash
 truffle develop
 ```
 
+Compile 
 
-
-## Compile and migrate
-inside truffle develop
-  
 ```bash
 compile 
-migrate
 ```
- 
- 
- 
-## Test 
-inside truffle develop
-  
+
+Test
+
 ```bash
 test
 ```
-
-
-View [test results](https://github.com/friendsfingers/friendsfingers-smartcontracts/blob/master/test/results/test-results.md)
 
 
 
 ## Optional
 
 
-### Flattener
-
-
-Install the [alcuadrado/truffle-flattener](https://github.com/alcuadrado/truffle-flattener)
+Install the [truffle-flattener](https://github.com/alcuadrado/truffle-flattener)
 
 ```bash
-npm install truffle-flattener -g
+npm install -g truffle-flattener
 ```
  
 Usage 
