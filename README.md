@@ -73,7 +73,6 @@ test
 
 ## Optional
 
-
 Install the [truffle-flattener](https://github.com/alcuadrado/truffle-flattener)
 
 ```bash
@@ -89,21 +88,6 @@ truffle-flattener contracts/token/FriendsFingersToken.sol >> dist/FriendsFingers
 ```
 
 
-### Linter
-
-Install the [Solium linter](https://github.com/duaraghav8/Solium)
-
-```bash
-npm install -g solium
-```
-
-Usage
-
-```bash
-solium -d contracts
-```
-
-
 ## Deployed Smart Contracts
 
 [FriendsFingersBuilder](https://etherscan.io/address/0xf01eab46ade80e599209681a5aaa13260ae8735c) 
@@ -116,13 +100,13 @@ solium -d contracts
 
 ## Helpful Links
  
-Solidity [Doc](https://solidity.readthedocs.io) [GitHub](https://github.com/ethereum/solidity)
- 
-Truffle [Doc](http://truffleframework.com/docs/) [GitHub](https://github.com/trufflesuite/truffle)
- 
-OpenZeppelin [Doc](http://zeppelin-solidity.readthedocs.io) [GitHub](https://github.com/OpenZeppelin)
+Solidity [Doc](https://solidity.readthedocs.io) [Github](https://solidity.readthedocs.io)
 
-Web3.js [Doc](http://web3js.readthedocs.io/en/1.0/index.html) [GitHub](https://github.com/ethereum/web3.js/)
+OpenZeppelin [Doc](https://openzeppelin.org/api/docs/open-zeppelin.html) [Github](https://github.com/OpenZeppelin)
+
+Truffle [Doc](http://truffleframework.com/docs) [Github](https://github.com/trufflesuite/truffle)
+
+Web3.js [Doc 0.20.6](https://github.com/ethereum/wiki/wiki/JavaScript-API) [Doc 1.0](http://web3js.readthedocs.io/en/1.0) [Github](https://github.com/ethereum/web3.js)
 
 
 
