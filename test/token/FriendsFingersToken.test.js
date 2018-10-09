@@ -65,16 +65,6 @@ contract('FriendsFingersToken', function ([owner, anotherAccount, recipient, thi
     shouldBehaveLikeERC1363BasicToken([owner, anotherAccount, recipient], initialBalance);
   });
 
-  context('like a ERC1363BasicToken', function () {
-    const initialBalance = 1000;
-
-    beforeEach(async function () {
-      await this.token.mint(owner, initialBalance, { from: minter });
-      await this.token.finishMinting({ from: owner });
-    });
-    shouldBehaveLikeERC1363BasicToken([owner, anotherAccount, recipient], initialBalance);
-  });
-
   context('like a BaseToken token', function () {
     const initialBalance = 1000;
 
