@@ -4,6 +4,8 @@ const { increaseTimeTo, duration } = require('./helpers/increaseTime');
 const { latestTime } = require('./helpers/latestTime');
 const { assertRevert } = require('./helpers/assertRevert');
 
+const { shouldBehaveLikeTokenRecover } = require('eth-token-recover/test/TokenRecover.behaviour');
+
 const BigNumber = web3.BigNumber;
 
 const should = require('chai')
@@ -1231,92 +1233,11 @@ contract('FriendsFingersBuilder', function (
     });
   });
 
-  describe('recover ERC20 tokens', function () {
-    it('should safe transfer tokens to beneficiary if sent into the contract', async function () {
-      const token1 = await FriendsFingersToken.new(this.name, this.symbol, this.decimals);
-
-      await token1.mint(this.builder.address, 200);
-      await token1.finishMinting();
-
-      let balanceContract = await token1.balanceOf(this.builder.address);
-      assert.equal(balanceContract, 200);
-      let balanceBeneficiary = await token1.balanceOf(thirdparty);
-      assert.equal(balanceBeneficiary, 0);
-
-      await this.builder.transferAnyERC20Token(token1.address, 30, thirdparty, { from: owner });
-
-      balanceContract = await token1.balanceOf(this.builder.address);
-      assert.equal(balanceContract, 170);
-      balanceBeneficiary = await token1.balanceOf(thirdparty);
-      assert.equal(balanceBeneficiary, 30);
+  context('like a TokenRecover', function () {
+    beforeEach(async function () {
+      this.instance = this.builder;
     });
 
-    it('owner or enabled address should safe transfer tokens from a crowdsale ' +
-      'to builder wallet if sent into the contract',
-    async function () {
-      this.openingTime = (await latestTime()) + duration.weeks(1);
-      this.closingTime = this.openingTime + duration.weeks(1);
-      this.afterOpeningTime = this.openingTime + duration.seconds(1);
-      this.afterClosingTime = this.closingTime + duration.seconds(1);
-
-      const { logs } = await this.builder.startCrowdsale(
-        this.name,
-        this.symbol,
-        this.decimals,
-        this.cap,
-        this.goal,
-        this.creatorSupply,
-        this.openingTime,
-        this.closingTime,
-        this.rate,
-        wallet,
-        this.crowdsaleInfo,
-        { from: creator }
-      );
-
-      const event = logs.find(e => e.event === 'CrowdsaleStarted');
-
-      this.crowdsale = FriendsFingersCrowdsale.at(event.args.ffCrowdsale);
-
-      const token1 = await FriendsFingersToken.new(this.name, this.symbol, this.decimals);
-
-      await token1.mint(this.crowdsale.address, 200);
-      await token1.finishMinting();
-
-      let balanceContract1 = await token1.balanceOf(this.crowdsale.address);
-      assert.equal(balanceContract1, 200);
-      let balanceBeneficiary1 = await token1.balanceOf(friendsFingersWallet);
-      assert.equal(balanceBeneficiary1, 0);
-
-      await this.builder.safeTokenWithdrawalFromCrowdsale(
-        this.crowdsale.address, token1.address, 30, { from: owner }
-      );
-
-      balanceContract1 = await token1.balanceOf(this.crowdsale.address);
-      assert.equal(balanceContract1, 170);
-      balanceBeneficiary1 = await token1.balanceOf(friendsFingersWallet);
-      assert.equal(balanceBeneficiary1, 30);
-
-      await this.builder.changeEnabledAddressStatus(auxWallet, true, { from: owner });
-
-      const token2 = await FriendsFingersToken.new(this.name, this.symbol, this.decimals);
-
-      await token2.mint(this.crowdsale.address, 200);
-      await token2.finishMinting();
-
-      let balanceContract2 = await token2.balanceOf(this.crowdsale.address);
-      assert.equal(balanceContract2, 200);
-      let balanceBeneficiary2 = await token2.balanceOf(friendsFingersWallet);
-      assert.equal(balanceBeneficiary2, 0);
-
-      await this.builder.safeTokenWithdrawalFromCrowdsale(
-        this.crowdsale.address, token2.address, 30, { from: auxWallet }
-      );
-
-      balanceContract2 = await token2.balanceOf(this.crowdsale.address);
-      assert.equal(balanceContract2, 170);
-      balanceBeneficiary2 = await token2.balanceOf(friendsFingersWallet);
-      assert.equal(balanceBeneficiary2, 30);
-    });
+    shouldBehaveLikeTokenRecover([owner, thirdparty]);
   });
 });

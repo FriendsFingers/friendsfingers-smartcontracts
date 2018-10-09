@@ -15,7 +15,7 @@ import "./../token/FriendsFingersToken.sol";
  * @title FriendsFingersCrowdsale
  */
 // solium-disable-next-line max-len
-contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, MintedCrowdsale, Pausable, SafeContract {
+contract FriendsFingersCrowdsale is CappedCrowdsale, FinalizableCrowdsale, MintedCrowdsale, Pausable, TokenRecover {
 
   enum State { Active, Refunding, Closed, Blocked, Expired }
 

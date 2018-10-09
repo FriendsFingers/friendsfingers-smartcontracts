@@ -1,17 +1,17 @@
 pragma solidity ^0.4.24;
 
-import "./../utility/ContractReceiverInterface.sol";
-import "./../utility/SafeContract.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
+import "erc-payable-token/contracts/token/ERC1363/ERC1363BasicToken.sol";
+import "eth-token-recover/contracts/TokenRecover.sol";
 
 
 /**
  * @title FriendsFingersToken
  */
 // solium-disable-next-line max-len
-contract FriendsFingersToken is DetailedERC20, MintableToken, BurnableToken, SafeContract {
+contract FriendsFingersToken is DetailedERC20, MintableToken, BurnableToken, ERC1363BasicToken, TokenRecover {
 
   address public builder;
 
@@ -53,25 +53,4 @@ contract FriendsFingersToken is DetailedERC20, MintableToken, BurnableToken, Saf
   {
     return super.transferFrom(_from, _to, _value);
   }
-
-  function approveAndCall(
-    address _spender,
-    uint256 _amount,
-    bytes _extraData
-  )
-    public
-    returns (bool success)
-  {
-    require(approve(_spender, _amount), "Spender must be approved");
-
-    ContractReceiverInterface(_spender).receiveApproval(
-      msg.sender,
-      _amount,
-      this,
-      _extraData
-    );
-
-    return true;
-  }
-
 }

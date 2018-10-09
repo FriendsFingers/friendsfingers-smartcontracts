@@ -6,7 +6,7 @@ import "./crowdsale/FriendsFingersCrowdsale.sol";
 /**
  * @title FriendsFingersBuilder
  */
-contract FriendsFingersBuilder is Pausable, SafeContract {
+contract FriendsFingersBuilder is Pausable, TokenRecover {
   using SafeMath for uint256;
 
   event CrowdsaleStarted(address ffCrowdsale);
@@ -267,18 +267,6 @@ contract FriendsFingersBuilder is Pausable, SafeContract {
   function blockCrowdsale(address _ffc) public onlyOwnerOrEnabledAddress {
     FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
     ffc.blockCrowdsale();
-  }
-
-  function safeTokenWithdrawalFromCrowdsale(
-    address _ffc,
-    address _tokenAddress,
-    uint256 _tokens
-  )
-    public
-    onlyOwnerOrEnabledAddress
-  {
-    FriendsFingersCrowdsale ffc = FriendsFingersCrowdsale(_ffc);
-    ffc.transferAnyERC20Token(_tokenAddress, _tokens, friendsFingersWallet);
   }
 
   function safeWithdrawalFromCrowdsale(

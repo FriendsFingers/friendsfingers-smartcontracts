@@ -1,4 +1,7 @@
-const { assertRevert } = require('./helpers/assertRevert');
+const { assertRevert } = require('../helpers/assertRevert');
+
+const { shouldBehaveLikeTokenRecover } = require('eth-token-recover/test/TokenRecover.behaviour');
+const { shouldBehaveLikeERC1363BasicToken } = require('erc-payable-token/test/token/ERC1363/ERC1363BasicToken.behaviour'); // eslint-disable-line max-len
 
 const BigNumber = web3.BigNumber;
 
@@ -10,7 +13,6 @@ require('chai')
 const expect = require('chai').expect;
 
 const FriendsFingersToken = artifacts.require('FriendsFingersToken');
-const ContractReceiverImpl = artifacts.require('ContractReceiverImpl');
 
 contract('FriendsFingersToken', function (accounts) {
   const obj = {
@@ -211,56 +213,25 @@ contract('FriendsFingersToken', function (accounts) {
     });
   });
 
-  describe('should have additional functions working as expected', function () {
-    it('should call receiveApproval on contract after approveAndCall', async function () {
-      const token = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
+  describe('like ERC1363', function () {
+    const initialBalance = 100;
 
-      const auxContract = await ContractReceiverImpl.new();
-
-      await token.mint(accounts[0], 100);
-      await token.finishMinting();
-
-      let balance0 = await token.balanceOf(accounts[0]);
-      assert.equal(balance0, 100);
-      let balance1 = await token.balanceOf(auxContract.address);
-      assert.equal(balance1, 0);
-
-      await token.approveAndCall(auxContract.address, 100, 'test');
-
-      balance0 = await token.balanceOf(accounts[0]);
-      assert.equal(balance0, 0);
-      balance1 = await token.balanceOf(auxContract.address);
-      assert.equal(balance1, 100);
-
-      const data = await auxContract.data();
-      assert.equal(web3.toAscii(data), 'test');
+    beforeEach(async function () {
+      this.token = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
+      await this.token.mint(accounts[0], initialBalance, { from: accounts[0] });
+      await this.token.finishMinting({ from: accounts[0] });
     });
-
-    it('should fail to transfer ETH into the token contract', async function () {
-      const token = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
-      await assertRevert(token.send(web3.toWei('1', 'ether')));
-    });
+    shouldBehaveLikeERC1363BasicToken([accounts[0], accounts[1], accounts[2]], initialBalance);
   });
 
-  describe('recover ERC20 tokens', function () {
-    it('should safe transfer tokens to beneficiary if sent into the contract', async function () {
-      const token1 = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
-      const token2 = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
+  context('like a TokenRecover', function () {
+    let token;
 
-      await token2.mint(token1.address, 200);
-      await token2.finishMinting();
-
-      let balanceContract = await token2.balanceOf(token1.address);
-      assert.equal(balanceContract, 200);
-      let balanceBeneficiary = await token2.balanceOf(accounts[1]);
-      assert.equal(balanceBeneficiary, 0);
-
-      await token1.transferAnyERC20Token(token2.address, 30, accounts[1]);
-
-      balanceContract = await token2.balanceOf(token1.address);
-      assert.equal(balanceContract, 170);
-      balanceBeneficiary = await token2.balanceOf(accounts[1]);
-      assert.equal(balanceBeneficiary, 30);
+    beforeEach(async function () {
+      token = await FriendsFingersToken.new(obj.name, obj.symbol, obj.decimals);
+      this.instance = token;
     });
+
+    shouldBehaveLikeTokenRecover([accounts[0], accounts[1]]);
   });
 });

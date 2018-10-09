@@ -1,8 +1,10 @@
-const { ether } = require('./helpers/ether');
-const { advanceBlock } = require('./helpers/advanceToBlock');
-const { increaseTimeTo, duration } = require('./helpers/increaseTime');
-const { latestTime } = require('./helpers/latestTime');
-const { assertRevert } = require('./helpers/assertRevert');
+const { ether } = require('../helpers/ether');
+const { advanceBlock } = require('../helpers/advanceToBlock');
+const { increaseTimeTo, duration } = require('../helpers/increaseTime');
+const { latestTime } = require('../helpers/latestTime');
+const { assertRevert } = require('../helpers/assertRevert');
+
+const { shouldBehaveLikeTokenRecover } = require('eth-token-recover/test/TokenRecover.behaviour');
 
 const BigNumber = web3.BigNumber;
 
@@ -836,24 +838,11 @@ contract('FriendsFingersCrowdsale', function (
     });
   });
 
-  describe('recover ERC20 tokens', function () {
-    it('should safe transfer tokens to beneficiary if sent into the contract', async function () {
-      const token1 = await FriendsFingersToken.new(this.name, this.symbol, this.decimals);
-
-      await token1.mint(this.crowdsale.address, 200);
-      await token1.finishMinting();
-
-      let balanceContract = await token1.balanceOf(this.crowdsale.address);
-      assert.equal(balanceContract, 200);
-      let balanceBeneficiary = await token1.balanceOf(thirdparty);
-      assert.equal(balanceBeneficiary, 0);
-
-      await this.crowdsale.transferAnyERC20Token(token1.address, 30, thirdparty, { from: owner });
-
-      balanceContract = await token1.balanceOf(this.crowdsale.address);
-      assert.equal(balanceContract, 170);
-      balanceBeneficiary = await token1.balanceOf(thirdparty);
-      assert.equal(balanceBeneficiary, 30);
+  context('like a TokenRecover', function () {
+    beforeEach(async function () {
+      this.instance = this.crowdsale;
     });
+
+    shouldBehaveLikeTokenRecover([owner, thirdparty]);
   });
 });
