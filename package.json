@@ -28,7 +28,7 @@
     "version": "scripts/version.js"
   },
   "bugs": {
-    "url": "https://github.com/friendsfingers/friendsfingers-smartcontracts/issues"
+    "url": "https://github.com/FriendsFingers/friendsfingers-smartcontracts/issues"
   },
   "license": "MIT",
   "author": "FriendsFingers",
@@ -37,7 +37,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/friendsfingers/friendsfingers-smartcontracts.git"
+    "url": "https://github.com/FriendsFingers/friendsfingers-smartcontracts.git"
   },
   "directories": {
     "test": "test"

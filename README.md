@@ -1,7 +1,7 @@
 # FriendsFingers Smart Contracts
 
-[![Build Status](https://travis-ci.org/friendsfingers/friendsfingers-smartcontracts.svg?branch=master)](https://travis-ci.org/friendsfingers/friendsfingers-smartcontracts)
-[![Coverage Status](https://coveralls.io/repos/github/friendsfingers/friendsfingers-smartcontracts/badge.svg?branch=master)](https://coveralls.io/github/friendsfingers/friendsfingers-smartcontracts?branch=master)
+[![Build Status](https://travis-ci.org/FriendsFingers/friendsfingers-smartcontracts.svg?branch=master)](https://travis-ci.org/FriendsFingers/friendsfingers-smartcontracts)
+[![Coverage Status](https://coveralls.io/repos/github/FriendsFingers/friendsfingers-smartcontracts/badge.svg?branch=master)](https://coveralls.io/github/FriendsFingers/friendsfingers-smartcontracts?branch=master)
 
 The source code for FriendsFingers Smart Contracts. 
  
@@ -49,7 +49,7 @@ test
 ```
 
 
-View [test results](https://github.com/friendsfingers/friendsfingers-smartcontracts/blob/master/test/results/test-results.md)
+View [test results](https://github.com/FriendsFingers/friendsfingers-smartcontracts/blob/master/test/results/test-results.md)
 
 
 
