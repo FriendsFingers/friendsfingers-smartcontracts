@@ -1,6 +1,6 @@
 # FriendsFingers Smart Contracts
 
-[![Build Status](https://travis-ci.org/friendsfingers/friendsfingers-smartcontracts.svg?branch=master)](https://travis-ci.org/friendsfingers/friendsfingers-smartcontracts)
+[![Build Status](https://travis-ci.org/FriendsFingers/friendsfingers-smartcontracts.svg?branch=master)](https://travis-ci.org/FriendsFingers/friendsfingers-smartcontracts)
 [![Coverage Status](https://coveralls.io/repos/github/friendsfingers/friendsfingers-smartcontracts/badge.svg?branch=master)](https://coveralls.io/github/friendsfingers/friendsfingers-smartcontracts?branch=master)
 
 The source code for FriendsFingers Smart Contracts. 
@@ -112,7 +112,7 @@ Web3.js [Doc 0.20.6](https://github.com/ethereum/wiki/wiki/JavaScript-API) [Doc 
 
 ## Bugs and Issues
 
-Have a bug? [Open a new issue](https://github.com/friendsfingers/friendsfingers-smartcontracts/issues).
+Have a bug? [Open a new issue](https://github.com/FriendsFingers/friendsfingers-smartcontracts/issues).
 
 
 
