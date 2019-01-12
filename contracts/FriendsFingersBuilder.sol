@@ -12,7 +12,7 @@ contract FriendsFingersBuilder is Pausable, TokenRecover {
   event CrowdsaleStarted(address ffCrowdsale);
   event CrowdsaleClosed(address ffCrowdsale);
 
-  uint public version = 1;
+  uint public version = 2;
   string public website = "https://www.friendsfingers.com";
   uint256 public friendsFingersRatePerMille = 50; //5%
   address public friendsFingersWallet;
